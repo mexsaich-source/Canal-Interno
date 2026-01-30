@@ -38,7 +38,6 @@ const initDB = async () => {
             );
         `);
         
-        // Crear Tabla de Pantallas
         await pool.query(`
             CREATE TABLE IF NOT EXISTS screens (
                 id SERIAL PRIMARY KEY,
@@ -52,7 +51,7 @@ const initDB = async () => {
         console.log('✅ TABLAS SQL VERIFICADAS');
 
         await crearUsuarioSiNoExiste('Carlos', 'C_Mexsa0126');
-        await crearUsuarioSiNoExiste('Recepcion', 'Hotel2024'); 
+       
 
     } catch (err) {
         console.error('❌ ERROR INICIALIZANDO DB:', err);
