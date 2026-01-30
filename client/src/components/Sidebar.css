@@ -1,157 +1,135 @@
+/* Sidebar.css */
+
+/* Contenedor principal */
 .sidebar {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 20px 0;
-    transition: width var(--transition-speed) ease;
-    overflow: hidden;
-    z-index: 1000;
-    position: fixed;
-    left: 0;
-    top: 0;
-    box-shadow: 2px 0 10px rgb(0, 0, 0);
+  height: 100%;
+  width: 250px; /* Ancho expandido */
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: rgba(20, 20, 20, 0.95); /* Casi negro */
+  color: white;
+  transition: all 0.3s ease;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  
+  /* IMPORTANTE: Para que gane al video */
+  position: relative; 
+  z-index: 20000; 
 }
 
-.sidebar.collapsed {
-    width: var(--sidebar-collapsed-width);
+/* Efecto Vidrio (Glassmorphism) */
+.glass {
+  background: rgba(25, 25, 25, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
-.sidebar.expanded {
-    width: var(--sidebar-width);
-}
-
+/* Logo */
 .logo-area {
-    display: flex;
-    align-items: center;
-    padding: 0 20px; 
-    height: 60px;  
-    margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo-icon-img {
-    height: 45px;    
-    width: auto;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-}
-
-.sidebar.collapsed .logo-icon-img {
-    transform: translateX(5px); 
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 
 .logo-text {
-    margin-left: 12px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    opacity: 0;
-    transition: opacity 0.2s;
-    white-space: nowrap;
-    color: rgb(255, 255, 255);
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
-.sidebar.expanded .logo-text {
-    opacity: 1;
-    transition-delay: 0.2s;
-}
-
+/* Navegación */
 .nav-menu {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1; /* Empuja el footer hacia abajo */
 }
 
 .nav-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 25px;
-    color: rgba(255, 255, 255, 0.6);
-    text-decoration: none;
-    transition: all 0.3s;
-    border-left: 4px solid transparent;
-    white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  text-decoration: none;
+  color: #aaa;
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
-.nav-item:hover,
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(5px);
+}
+
 .nav-item.active {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
+  background: #007bff; /* O el color dorado de Hilton */
+  color: white;
+  box-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
 }
 
-.nav-item.active {
-    border-left-color: var(--accent-color);
+.icon {
+  font-size: 1.2rem;
 }
 
-.nav-item .icon {
-    font-size: 1.2rem;
-    min-width: 30px;
-    display: flex;
-    justify-content: center;
-}
-
-.nav-item .label {
-    margin-left: 15px;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.sidebar.expanded .nav-item .label {
-    opacity: 1;
-    transition-delay: 0.1s;
-}
-
+/* Footer y Botón de Candado */
 .footer-area {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .qr-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    transition: all 0.3s ease;
+  text-align: center;
+  opacity: 0.8;
 }
 
 .qr-image {
-    width: 80%;       
-    max-width: 120px;
-    border-radius: 8px;
-    background: white; 
-    padding: 5px;
-    transition: transform 0.3s ease, opacity 0.3s;
-}
-
-.sidebar.collapsed .qr-image {
-    width: 30px;
-    opacity: 0.5;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
 }
 
 .qr-text {
-    font-size: 0.7rem;
-    margin-top: 8px;
-    opacity: 0;
-    white-space: nowrap;
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  color: #888;
 }
 
-.sidebar.expanded .qr-text {
-    opacity: 0.7;
-}
-
+/* EL BOTÓN QUE NO JALABA */
 .admin-lock {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.2);
-    cursor: pointer;
-    font-size: 1rem;
-    transition: color 0.3s, transform 0.2s;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #666;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer; /* IMPORTANTE: Manita al pasar mouse */
+  transition: 0.3s;
+  font-size: 1.1rem;
 }
 
 .admin-lock:hover {
-    color: var(--accent-color);
-    transform: scale(1.1);
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff4444;
+  border-color: #ff4444;
+  transform: scale(1.1);
 }

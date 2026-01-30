@@ -12,7 +12,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const SECRET_KEY = process.env.JWT_SECRET || "mi_secreto_super_seguro";
+const SECRET_KEY = process.env.JWT_SECRET;
 
 app.use(cors({ origin: '*' }));
 app.use(express.json());
@@ -60,17 +60,14 @@ const initDB = async () => {
 
 async function crearUsuarioSiNoExiste(nombreUser, passwordUser) {
     try {
-        // 1. Buscamos si ya existe
         const res = await pool.query('SELECT * FROM users WHERE username = $1', [nombreUser]);
         
         if (res.rows.length === 0) {
-            // 2. Si no existe, encriptamos y creamos
             const hashedPassword = await bcrypt.hash(passwordUser, 10);
             await pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', [nombreUser, hashedPassword]);
-            console.log(`👤 Usuario NUEVO creado: ${nombreUser}`);
+            console.log(` Usuario NUEVO creado: ${nombreUser}`);
         } else {
-            // 3. Si ya existe, avisamos
-            console.log(`👀 El usuario "${nombreUser}" ya existe (Saltando...)`);
+            console.log(`El usuario "${nombreUser}" ya existe (Saltando...)`);
         }
     } catch (err) {
         console.error(`Error creando a ${nombreUser}:`, err);
@@ -136,7 +133,6 @@ app.post('/api/rotation/:category', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// SUBIR VIDEO
 app.post('/api/upload/:category', upload.single('video'), async (req, res) => {
     const { category } = req.params;
     try {
@@ -155,4 +151,4 @@ app.post('/api/upload/:category', upload.single('video'), async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`🚀 SERVIDOR LISTO EN PUERTO ${PORT}`));
+app.listen(PORT, () => console.log(`SERVIDOR LISTO EN PUERTO ${PORT}`));

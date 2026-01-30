@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import api from '../../api';
 import './Dashboard.css';
 
-// Asegúrate de que estos nombres sean EXACTAMENTE iguales a los que usarás en la URL
 const categories = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes'];
 
 const Dashboard = ({ onLogout }) => {
@@ -15,8 +14,7 @@ const Dashboard = ({ onLogout }) => {
 
         const formData = new FormData();
         formData.append('video', file);
-        // No es necesario append category al formData si ya lo pasamos como parámetro, 
-        // pero no estorba.
+        
 
         setUploading(category);
         setMessage(null);
@@ -34,7 +32,7 @@ const Dashboard = ({ onLogout }) => {
             setMessage({ type: 'error', text: `❌ Error al subir: ${error.response?.data?.error || error.message}` });
         } finally {
             setUploading(null);
-            e.target.value = null; // Limpiar el input para permitir subir el mismo archivo si es necesario
+            e.target.value = null; 
         }
     };
 
@@ -73,7 +71,6 @@ const Dashboard = ({ onLogout }) => {
                                     />
                                 </label>
                                 
-                                {/* Botón de eliminar desactivado temporalmente */}
                                 <button
                                     className="delete-btn"
                                     onClick={() => handleDelete(cat)}

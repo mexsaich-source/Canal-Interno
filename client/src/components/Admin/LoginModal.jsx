@@ -23,7 +23,6 @@ const LoginModal = ({ onClose, onLogin }) => {
 
             const data = await response.json();
 
-            // 2. Si la respuesta no es OK (ej: usuario no encontrado), lanzamos error
             if (!response.ok) {
                 throw new Error(data.error || 'Error al iniciar sesión');
             }
