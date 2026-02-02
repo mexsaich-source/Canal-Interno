@@ -4,6 +4,7 @@ import './VideoPlayer.css';
 import WelcomeScreen from './WelcomeScreen';
 import api from '../../api';
 
+
 const VideoPlayer = ({ category }) => {
     const videoRef = useRef(null);
     const containerRef = useRef(null);
