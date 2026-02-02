@@ -11,7 +11,8 @@ import WelcomeScreen from './components/WelcomeScreen';
 // Wrapper para leer parámetros de URL (ej: /screen/Restaurante)
 const ScreenWrapper = () => {
   const { category } = useParams();
-  return <VideoPlayer category={decodeURIComponent(category)} />;
+  const decodedCategory = decodeURIComponent(category);
+  return <VideoPlayer key={decodedCategory} category={decodedCategory} />;
 };
 
 const InnerApp = () => {
@@ -101,11 +102,11 @@ const InnerApp = () => {
           <Route path="/" element={<WelcomeScreen />} />
 
           {/* 2. Rutas de Canales Específicos */}
-          <Route path="/inicio" element={<VideoPlayer category="Inicio" />} />
-          <Route path="/hh" element={<VideoPlayer category="HH" />} />
-          <Route path="/service-room" element={<VideoPlayer category="Room Service" />} />
-          <Route path="/promociones" element={<VideoPlayer category="Promociones" />} />
-          <Route path="/clientes" element={<VideoPlayer category="Clientes" />} />
+          <Route path="/inicio" element={<VideoPlayer key="Inicio" category="Inicio" />} />
+          <Route path="/hh" element={<VideoPlayer key="HH" category="HH" />} />
+          <Route path="/service-room" element={<VideoPlayer key="Room Service" category="Room Service" />} />
+          <Route path="/promociones" element={<VideoPlayer key="Promociones" category="Promociones" />} />
+          <Route path="/clientes" element={<VideoPlayer key="Clientes" category="Clientes" />} />
 
           {/* 3. Ruta Dinámica (por si usas QR o enlaces externos) */}
           <Route path="/screen/:category" element={<ScreenWrapper />} />

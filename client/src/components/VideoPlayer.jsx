@@ -165,10 +165,8 @@ const VideoPlayer = ({ category }) => {
                     )}
                 </div>
             ) : (
-                // 3. PANTALLA DE ESPERA (Placeholder Animado Hilton)
-                !showWelcome && (
-                    <WelcomeScreen persistent={true} />
-                )
+                // 3. PANTALLA DE ESPERA (Animación Hilton permanente si no hay video)
+                <WelcomeScreen persistent={true} />
             )}
 
             {/* 4. CONTROLES (Visibles solo si mueves el mouse o tocas, según tu CSS) */}
