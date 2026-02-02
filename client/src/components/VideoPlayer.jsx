@@ -137,8 +137,8 @@ const VideoPlayer = ({ category }) => {
             className={`video-container ${isFullscreen ? 'fullscreen-mode' : ''}`}
             style={{ backgroundColor: '#000', width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}
         >
-            {/* 1. PANTALLA DE BIENVENIDA (HILTON) */}
-            {showWelcome && (
+            {/* 1. PANTALLA DE BIENVENIDA (HILTON) - Solo si no hay video aún */}
+            {showWelcome && !videoSrc && (
                 <WelcomeScreen onFinish={() => setShowWelcome(false)} />
             )}
 

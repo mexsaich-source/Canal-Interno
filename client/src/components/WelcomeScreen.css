@@ -26,10 +26,10 @@
     50%,
     95% {
         background-color: #000000;
-        color: #ffffff;
+        color: #0088ff;
     }
 
-    /* Negro, Letras Azules */
+    /* Negro, Letras Azules Brillantes */
     100% {
         background-color: #002D62;
         color: #ffffff;
