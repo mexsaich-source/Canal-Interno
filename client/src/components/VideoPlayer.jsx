@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { FaExpand, FaRedo } from 'react-icons/fa';
 import './VideoPlayer.css';
 import WelcomeScreen from './WelcomeScreen';
-import api from '../../api';
+import api from '../api';
 
 
 const VideoPlayer = ({ category }) => {
