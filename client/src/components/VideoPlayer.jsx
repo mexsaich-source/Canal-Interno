@@ -136,12 +136,7 @@ const VideoPlayer = ({ category }) => {
             className={`video-container ${isFullscreen ? 'fullscreen-mode' : ''}`}
             style={{ backgroundColor: '#000', width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}
         >
-            {/* 1. PANTALLA DE BIENVENIDA (HILTON) - Solo si no hay video aún */}
-            {showWelcome && !videoSrc && (
-                <WelcomeScreen onFinish={() => setShowWelcome(false)} />
-            )}
-
-            {/* 2. REPRODUCTOR (VIDEO O IMAGEN) */}
+            {/* 1. REPRODUCTOR (VIDEO O IMAGEN) */}
             {videoSrc ? (
                 <div className="video-wrapper">
                     {mediaType === 'image' ? (
@@ -149,7 +144,7 @@ const VideoPlayer = ({ category }) => {
                             key={videoSrc}
                             src={videoSrc}
                             alt="Pantalla"
-                            className="main-video" // Reusamos clase para CSS base
+                            className="main-video"
                             style={commonStyle}
                         />
                     ) : (
@@ -167,11 +162,11 @@ const VideoPlayer = ({ category }) => {
                     )}
                 </div>
             ) : (
-                // 3. PANTALLA DE ESPERA (Animación Hilton permanente si no hay video)
+                // 2. PANTALLA DE ESPERA (Animación Hilton permanente si no hay video)
                 <WelcomeScreen persistent={true} />
             )}
 
-            {/* 4. CONTROLES (Visibles solo si mueves el mouse o tocas, según tu CSS) */}
+            {/* 3. CONTROLES (Visibles al mover el mouse) */}
             <div className="controls-overlay" style={{ zIndex: 1000 }}>
                 <button className="control-btn" onClick={handleRotate} title="Rotar">
                     <FaRedo />
