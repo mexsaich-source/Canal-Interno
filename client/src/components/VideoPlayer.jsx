@@ -63,9 +63,11 @@ const VideoPlayer = ({ category }) => {
                 }
 
                 // Actualizamos URL si es diferente (aplicando optimización)
-                const newOptimizedUrl = optimizeUrl(data.video_url);
-                if (data.video_url && newOptimizedUrl !== videoSrc) {
-                    console.log(`[VideoPlayer] Nuevo contenido para ${category}:`, newOptimizedUrl);
+                // Usamos || '' para asegurar que si el video_url es null/undefined se trate como vacío
+                const newOptimizedUrl = optimizeUrl(data.video_url || '');
+                if (newOptimizedUrl !== videoSrc) {
+                    console.log(`[VideoPlayer] Cambio de contenido para ${category}:`,
+                        newOptimizedUrl ? newOptimizedUrl : "VACÍO (Mostrando Hilton)");
                     setVideoSrc(newOptimizedUrl);
                 }
             }
