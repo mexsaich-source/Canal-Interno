@@ -3,19 +3,44 @@ import { FaExpand, FaRedo } from 'react-icons/fa';
 import './VideoPlayer.css';
 import WelcomeScreen from './WelcomeScreen'; // Importamos la pantalla de Hilton
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = (import.meta.env.VITE_API_URL) ? import.meta.env.VITE_API_URL : 'http://localhost:5000';
 
 const VideoPlayer = ({ category }) => {
     const videoRef = useRef(null);
     const containerRef = useRef(null);
-    
-    // Estados
-    const [videoSrc, setVideoSrc] = useState(null);
-    const [rotation, setRotation] = useState(0);
+
+    // Helper para optimizar URLs de Cloudinary
+    const optimizeUrl = (url) => {
+        if (!url || !url.includes('cloudinary.com')) return url;
+        if (url.includes('/upload/')) {
+            return url.replace('/upload/', '/upload/q_auto,f_auto/');
+        }
+        return url;
+    };
+
+    // Función interna para leer caché sincrónicamente
+    const getInitialCache = () => {
+        const cached = localStorage.getItem(`cache_${category}`);
+        if (cached) {
+            try {
+                return JSON.parse(cached);
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    };
+
+    const initialData = getInitialCache();
+
+    // Estados inicializados con caché si existe
+    const [videoSrc, setVideoSrc] = useState(initialData ? optimizeUrl(initialData.video_url) : null);
+    const [mediaType, setMediaType] = useState(initialData ? initialData.media_type : 'video');
+    const [rotation, setRotation] = useState(initialData ? initialData.rotation : 0);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    
+
     // Estado NUEVO: Controla la pantalla de bienvenida
-    const [showWelcome, setShowWelcome] = useState(true); 
+    const [showWelcome, setShowWelcome] = useState(true);
 
     // Función para buscar video en el servidor
     const checkStatus = async () => {
@@ -23,29 +48,38 @@ const VideoPlayer = ({ category }) => {
             const res = await fetch(`${API_URL}/api/screen/${category}`);
             if (res.ok) {
                 const data = await res.json();
-                
+
+                // Actualizar caché
+                localStorage.setItem(`cache_${category}`, JSON.stringify(data));
+
                 // Actualizamos rotación si cambió
                 if (data.rotation !== rotation) {
                     setRotation(data.rotation);
                 }
-                
-                // Actualizamos video si es diferente al actual
-                if (data.video_url && data.video_url !== videoSrc) {
-                    setVideoSrc(data.video_url);
+
+                // Actualizamos tipo de medio
+                if (data.media_type && data.media_type !== mediaType) {
+                    setMediaType(data.media_type);
+                }
+
+                // Actualizamos URL si es diferente (aplicando optimización)
+                const newOptimizedUrl = optimizeUrl(data.video_url);
+                if (data.video_url && newOptimizedUrl !== videoSrc) {
+                    console.log(`[VideoPlayer] Nuevo contenido para ${category}:`, newOptimizedUrl);
+                    setVideoSrc(newOptimizedUrl);
                 }
             } else {
-                // Si el servidor dice que no hay video, no borramos el actual de inmediato
-                // para evitar pantallazo negro, a menos que sea explícito.
-                console.log("No hay video asignado o error en servidor");
+                console.log("No hay contenido asignado o error en servidor");
             }
         } catch (err) {
             console.error("Error conectando al servidor:", err);
+            // No hacemos nada, mantenemos el caché o lo que ya estaba
         }
     };
 
     // Efecto de carga inicial y polling (revisión cada 5 seg)
     useEffect(() => {
-        checkStatus(); // Primera revisión inmediata
+        checkStatus();
         const interval = setInterval(checkStatus, 5000);
         return () => clearInterval(interval);
     }, [category]);
@@ -87,49 +121,54 @@ const VideoPlayer = ({ category }) => {
 
     const isVertical = rotation === 90 || rotation === 270;
 
+    const commonStyle = {
+        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        width: isVertical ? '100vh' : '100%',
+        height: isVertical ? '100vw' : '100%',
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        objectFit: 'contain' // Mantener proporción sin cortes
+    };
+
     return (
-        <div 
+        <div
             ref={containerRef}
             className={`video-container ${isFullscreen ? 'fullscreen-mode' : ''}`}
+            style={{ backgroundColor: '#000', width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}
         >
             {/* 1. PANTALLA DE BIENVENIDA (HILTON) */}
-            {/* Se muestra al inicio (showWelcome=true). Al terminar su timer, llama a setShowWelcome(false) */}
             {showWelcome && (
                 <WelcomeScreen onFinish={() => setShowWelcome(false)} />
             )}
 
-            {/* 2. EL REPRODUCTOR DE VIDEO */}
+            {/* 2. REPRODUCTOR (VIDEO O IMAGEN) */}
             {videoSrc ? (
                 <div className="video-wrapper">
-                    <video
-                        ref={videoRef}
-                        src={videoSrc}
-                        autoPlay 
-                        loop 
-                        muted 
-                        playsInline
-                        className="main-video"
-                        style={{
-                            transform: `rotate(${rotation}deg)`,
-                            // Ajuste dinámico para videos verticales
-                            width: isVertical ? '100vh' : '100%',
-                            height: isVertical ? '100vw' : '100%',
-                            // Ajuste de posición para que al rotar no se descuadre
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            translate: '-50% -50%',
-                            objectFit: 'cover'
-                        }}
-                    />
+                    {mediaType === 'image' ? (
+                        <img
+                            src={videoSrc}
+                            alt="Pantalla"
+                            className="main-video" // Reusamos clase para CSS base
+                            style={commonStyle}
+                        />
+                    ) : (
+                        <video
+                            ref={videoRef}
+                            src={videoSrc}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="main-video"
+                            style={commonStyle}
+                        />
+                    )}
                 </div>
             ) : (
-                // 3. PANTALLA DE ESPERA (Si ya pasó el welcome pero no hay video)
+                // 3. PANTALLA DE ESPERA (Placeholder Animado Hilton)
                 !showWelcome && (
-                    <div className="video-placeholder">
-                        <h2>Esperando señal...</h2>
-                        <div className="spinner"></div> {/* Puedes agregar un spinner CSS aquí */}
-                    </div>
+                    <WelcomeScreen persistent={true} />
                 )
             )}
 

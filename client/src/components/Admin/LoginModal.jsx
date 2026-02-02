@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './LoginModal.css';
+import api from '../../api';
 
 const LoginModal = ({ onClose, onLogin }) => {
     const [username, setUsername] = useState('');
@@ -13,28 +14,16 @@ const LoginModal = ({ onClose, onLogin }) => {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Error al iniciar sesión');
-            }
+            const data = await api.login(username, password);
 
             console.log("Login exitoso:", data.username);
-            onLogin(data.token); 
-            
+            onLogin(data.token);
+
         } catch (err) {
             console.error("Error de conexión:", err);
-            const mensaje = err.message === 'Failed to fetch' 
-                ? 'No se puede conectar con el servidor (¿Está prendido?)' 
-                : err.message;
+            const mensaje = err.response && err.response.data && err.response.data.error
+                ? err.response.data.error
+                : 'No se puede conectar con el servidor (¿Está iniciado?)';
             setError(mensaje);
         } finally {
             setIsLoading(false);

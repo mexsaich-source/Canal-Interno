@@ -1,23 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaHome, FaCocktail, FaConciergeBell, FaTags, FaUsers, FaLock } from 'react-icons/fa';
+import { FaHome, FaCocktail, FaConciergeBell, FaTags, FaUsers, FaLock, FaTv } from 'react-icons/fa';
+import api from '../api';
 import './Sidebar.css';
 
 const Sidebar = ({ onAdminClick }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [categories, setCategories] = useState([]);
 
-    const menuItems = [
-        { name: 'Inicio', path: '/inicio', icon: <FaHome /> },
-        { name: 'HH', path: '/hh', icon: <FaCocktail /> },
-        { name: 'Room Service', path: '/service-room', icon: <FaConciergeBell /> },
-        { name: 'Promociones', path: '/promociones', icon: <FaTags /> },
-        { name: 'Clientes', path: '/clientes', icon: <FaUsers /> },
-    ];
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const data = await api.getCategories();
+                setCategories(data);
+            } catch (err) {
+                console.error("Error sidebar cats:", err);
+            }
+        };
+        load();
+    }, []);
+
+    // Mapa de iconos y rutas para categorías conocidas
+    const getMenuInfo = (name) => {
+        switch (name) {
+            case 'Inicio': return { path: '/inicio', icon: <FaHome /> };
+            case 'HH': return { path: '/hh', icon: <FaCocktail /> };
+            case 'Room Service': return { path: '/service-room', icon: <FaConciergeBell /> };
+            case 'Promociones': return { path: '/promociones', icon: <FaTags /> };
+            case 'Clientes': return { path: '/clientes', icon: <FaUsers /> };
+            default: return { path: `/screen/${encodeURIComponent(name)}`, icon: <FaTv /> };
+        }
+    };
+
+    const handleMouseEnter = () => {
+        setIsHovered(true);
+        load(); // Refrescar categorías al abrir el menú
+    };
 
     return (
         <div
             className={`sidebar glass ${isHovered ? 'expanded' : 'collapsed'}`}
-            onMouseEnter={() => setIsHovered(true)}
+            onMouseEnter={handleMouseEnter}
             onMouseLeave={() => setIsHovered(false)}
         >
             <div className="logo-area">
@@ -26,16 +49,19 @@ const Sidebar = ({ onAdminClick }) => {
             </div>
 
             <nav className="nav-menu">
-                {menuItems.map((item) => (
-                    <NavLink
-                        key={item.name}
-                        to={item.path}
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                    >
-                        <span className="icon">{item.icon}</span>
-                        <span className="label">{item.name}</span>
-                    </NavLink>
-                ))}
+                {categories.map((cat) => {
+                    const { path, icon } = getMenuInfo(cat);
+                    return (
+                        <NavLink
+                            key={cat}
+                            to={path}
+                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <span className="icon">{icon}</span>
+                            <span className="label">{cat}</span>
+                        </NavLink>
+                    );
+                })}
             </nav>
 
             <div className="footer-area">

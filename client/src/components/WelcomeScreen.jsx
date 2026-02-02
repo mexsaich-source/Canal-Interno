@@ -1,41 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import './WelcomeScreen.css';
 
-const WelcomeScreen = () => {
+const WelcomeScreen = ({ onFinish, persistent = false }) => {
+  useEffect(() => {
+    if (persistent) return; // No auto-cerrar si es placeholder
+
+    const timer = setTimeout(() => {
+      onFinish && onFinish();
+    }, 5000); // 5 segundos de Hilton
+    return () => clearTimeout(timer);
+  }, [onFinish, persistent]);
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: '#000',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 9999, 
-      color: 'white'
-    }}>
-      <h1 style={{ 
-        fontSize: '5rem', 
-        fontFamily: 'serif', 
-        letterSpacing: '8px',
-        marginBottom: '20px',
-        textTransform: 'uppercase'
-      }}>
-        HILTON
-      </h1>
-      
-      <p style={{ letterSpacing: '3px', fontSize: '1.2rem', color: '#888' }}>
-        México City Santa fe
-      </p>
-
-      <div style={{ 
-        marginTop: '40px', 
-        width: '100px', 
-        height: '2px', 
-        background: 'linear-gradient(90deg, transparent, #fff, transparent)' 
-      }}></div>
+    <div className={`welcome-overlay ${persistent ? 'placeholder' : ''}`}>
+      <h1 className="welcome-title">HILTON</h1>
+      <p className="welcome-subtitle">México City Santa Fe</p>
+      <div className="welcome-line"></div>
     </div>
   );
 };

@@ -6,7 +6,7 @@ import Sidebar from './components/Sidebar';
 import VideoPlayer from './components/VideoPlayer';
 import LoginModal from './components/Admin/LoginModal';
 import Dashboard from './components/Admin/Dashboard';
-import WelcomeScreen from './components/WelcomeScreen'; 
+import WelcomeScreen from './components/WelcomeScreen';
 
 // Wrapper para leer parámetros de URL (ej: /screen/Restaurante)
 const ScreenWrapper = () => {
@@ -19,7 +19,7 @@ const InnerApp = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false); // Controla si se ve el menú lateral
-  
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -27,7 +27,7 @@ const InnerApp = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) {
-        setShowSidebar(prev => !prev); 
+        setShowSidebar(prev => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -35,22 +35,24 @@ const InnerApp = () => {
   }, []);
 
   // --- 2. VERIFICAR SESIÓN ADMIN ---
+  // --- 2. VERIFICAR SESIÓN (Auto-Logout) ---
+  // NO recuperamos token de localStorage al inicio para obligar login al refrescar.
+
+  // Efecto: Cerrar sesión si navegas fuera de /admin
   useEffect(() => {
-    // Si tienes un token guardado, recupéralo al recargar
-    const token = localStorage.getItem('token');
-    if (token) {
-        setIsAdmin(true);
+    if (isAdmin && !location.pathname.startsWith('/admin')) {
+      handleLogout();
     }
-  }, []);
+  }, [location]);
 
   // --- HANDLERS (Funciones) ---
-  
+
   const handleLoginSuccess = (token) => {
     localStorage.setItem('token', token);
     setIsAdmin(true);
     setShowLogin(false);
-    navigate('/admin'); // Te lleva al dashboard
-    setShowSidebar(true); // Deja el sidebar visible
+    setShowSidebar(true);
+    navigate('/admin');
   };
 
   const handleLogout = () => {
@@ -69,21 +71,21 @@ const InnerApp = () => {
   };
 
   return (
-    <div className="app-container" style={{ 
-      position: 'relative', 
-      width: '100vw', 
-      height: '100vh', 
+    <div className="app-container" style={{
+      position: 'relative',
+      width: '100vw',
+      height: '100vh',
       overflow: 'hidden',
-      backgroundColor: '#000' 
+      backgroundColor: '#000'
     }}>
-      
+
       {/* --- A. SIDEBAR FLOTANTE --- */}
       {/* Solo se renderiza si showSidebar es true (Ctrl + b) */}
-      <div style={{ 
-        position: 'absolute', 
-        top: 0, 
+      <div style={{
+        position: 'absolute',
+        top: 0,
         left: showSidebar ? 0 : '-300px', // Animación simple o ocultamiento
-        height: '100%', 
+        height: '100%',
         zIndex: 20000, // ¡MUY IMPORTANTE! Encima de todo
         transition: 'left 0.3s ease',
         display: showSidebar ? 'block' : 'none' // Ocultar del DOM si no se usa
@@ -97,7 +99,7 @@ const InnerApp = () => {
         <Routes>
           {/* 1. Ruta Raíz: Pantalla Hilton Infinita */}
           <Route path="/" element={<WelcomeScreen />} />
-          
+
           {/* 2. Rutas de Canales Específicos */}
           <Route path="/inicio" element={<VideoPlayer category="Inicio" />} />
           <Route path="/hh" element={<VideoPlayer category="HH" />} />
@@ -109,26 +111,26 @@ const InnerApp = () => {
           <Route path="/screen/:category" element={<ScreenWrapper />} />
 
           {/* 4. Ruta Protegida de Admin */}
-          <Route 
-            path="/admin" 
-            element={isAdmin ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/" />} 
+          <Route
+            path="/admin"
+            element={isAdmin ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/" />}
           />
         </Routes>
       </div>
 
       {/* --- C. MODAL DE LOGIN (FLOTANTE) --- */}
       {showLogin && (
-        <div style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            width: '100vw', 
-            height: '100vh', 
-            zIndex: 30000, // EL MÁS ALTO DE TODOS
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0,0,0,0.6)' // Fondo oscuro semitransparente
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 30000, // EL MÁS ALTO DE TODOS
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0,0,0,0.6)' // Fondo oscuro semitransparente
         }}>
           <LoginModal
             onClose={() => setShowLogin(false)}

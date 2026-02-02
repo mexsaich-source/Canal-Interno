@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Usamos localhost para asegurar la conexión local
-const API_URL = 'http://localhost:5000/api'; 
+// Usamos variable de entorno o fallback a localhost
+const API_URL = (import.meta.env.VITE_API_URL) ? import.meta.env.VITE_API_URL : 'http://localhost:5000/api';
 
 const api = {
     // 1. OBTENER PANTALLA (Corregido de /videos a /screen)
@@ -27,15 +27,45 @@ const api = {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 // Enviamos el token para futura seguridad (opcional por ahora)
-                'Authorization': `Bearer ${token}` 
+                'Authorization': `Bearer ${token}`
             }
         });
         return response.data;
     },
 
-    // 4. CAMBIAR ROTACIÓN (Agregamos esta función que faltaba)
+    // 4. CAMBIAR ROTACIÓN
     updateRotation: async (category, rotation) => {
         const response = await axios.post(`${API_URL}/rotation/${category}`, { rotation });
+        return response.data;
+    },
+
+    // 5. OBTENER CATEGORÍAS
+    getCategories: async () => {
+        const response = await axios.get(`${API_URL}/categories`);
+        return response.data;
+    },
+
+    // 6. CREAR CATEGORÍA
+    createCategory: async (category, token) => {
+        const response = await axios.post(`${API_URL}/category`, { category }, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // 7. ELIMINAR CATEGORÍA
+    deleteCategory: async (category, token) => {
+        const response = await axios.delete(`${API_URL}/category/${category}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // 8. QUITAR CONTENIDO (RESET)
+    resetScreenContent: async (category, token) => {
+        const response = await axios.post(`${API_URL}/screen/reset/${category}`, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         return response.data;
     }
 };
