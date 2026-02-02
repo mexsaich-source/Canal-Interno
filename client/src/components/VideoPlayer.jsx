@@ -1,9 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { FaExpand, FaRedo } from 'react-icons/fa';
 import './VideoPlayer.css';
-import WelcomeScreen from './WelcomeScreen'; // Importamos la pantalla de Hilton
-
-const API_URL = (import.meta.env.VITE_API_URL) ? import.meta.env.VITE_API_URL : 'http://localhost:5000';
+import WelcomeScreen from './WelcomeScreen';
+import api from '../../api';
 
 const VideoPlayer = ({ category }) => {
     const videoRef = useRef(null);
@@ -45,9 +44,9 @@ const VideoPlayer = ({ category }) => {
     // Función para buscar video en el servidor
     const checkStatus = async () => {
         try {
-            const res = await fetch(`${API_URL}/api/screen/${category}`);
-            if (res.ok) {
-                const data = await res.json();
+            const data = await api.getScreen(category);
+            if (data) {
+                console.log(`[DEBUG] Datos recibidos para categoría "${category}":`, data);
 
                 // Actualizar caché
                 localStorage.setItem(`cache_${category}`, JSON.stringify(data));
@@ -68,12 +67,9 @@ const VideoPlayer = ({ category }) => {
                     console.log(`[VideoPlayer] Nuevo contenido para ${category}:`, newOptimizedUrl);
                     setVideoSrc(newOptimizedUrl);
                 }
-            } else {
-                console.log("No hay contenido asignado o error en servidor");
             }
         } catch (err) {
             console.error("Error conectando al servidor:", err);
-            // No hacemos nada, mantenemos el caché o lo que ya estaba
         }
     };
 
@@ -147,6 +143,7 @@ const VideoPlayer = ({ category }) => {
                 <div className="video-wrapper">
                     {mediaType === 'image' ? (
                         <img
+                            key={videoSrc}
                             src={videoSrc}
                             alt="Pantalla"
                             className="main-video" // Reusamos clase para CSS base
@@ -154,6 +151,7 @@ const VideoPlayer = ({ category }) => {
                         />
                     ) : (
                         <video
+                            key={videoSrc}
                             ref={videoRef}
                             src={videoSrc}
                             autoPlay
