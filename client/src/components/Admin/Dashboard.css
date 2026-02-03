@@ -1,11 +1,11 @@
 /* src/components/Dashboard.css */
 
 .dashboard-container {
-    /* --- CAMBIOS PARA ARREGLAR EL SCROLL --- */
-    height: 100vh;          /* Usar height fijo en lugar de min-height */
-    overflow-y: auto;       /* Habilita el scroll interno */
-    padding-bottom: 80px;   /* Espacio extra al final para que no se corte */
-    /* --------------------------------------- */
+    /* --- CORRECCIÓN DEL SCROLL --- */
+    height: 100vh;           /* Importante: Altura fija igual a la pantalla */
+    overflow-y: auto;        /* Importante: Activa el scroll vertical en este contenedor */
+    padding-bottom: 100px;   /* Espacio extra abajo para que no se corte la última fila */
+    /* ----------------------------- */
 
     width: 100%;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -81,7 +81,7 @@
 
 .card-icon {
     font-size: 2.5rem;
-    color: var(--accent-color); /* Asegúrate de tener esta variable o cámbiala por un color fijo */
+    color: #0984e3; /* Color azul por defecto si no tienes la variable accent-color */
     margin-bottom: 15px;
     opacity: 0.8;
 }
