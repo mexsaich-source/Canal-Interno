@@ -170,19 +170,17 @@
   color: #ccc;
 }
 
-/* EL BOTÓN QUE NO JALABA */
 .admin-lock {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ccc;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  /* IMPORTANTE: Manita al pasar mouse */
   transition: 0.3s;
   font-size: 1.1rem;
 }
