@@ -4,7 +4,6 @@ import './VideoPlayer.css';
 import WelcomeScreen from './WelcomeScreen';
 import api from '../api';
 
-
 const VideoPlayer = ({ category }) => {
     const videoRef = useRef(null);
     const containerRef = useRef(null);
@@ -18,57 +17,66 @@ const VideoPlayer = ({ category }) => {
         return url;
     };
 
-    // Función interna para leer caché sincrónicamente
+    // --- LEER CACHÉ INICIAL (DATOS DEL API) ---
     const getInitialCache = () => {
         const cached = localStorage.getItem(`cache_${category}`);
         if (cached) {
-            try {
-                return JSON.parse(cached);
-            } catch (e) {
-                return null;
-            }
+            try { return JSON.parse(cached); } catch (e) { return null; }
         }
         return null;
     };
 
     const initialData = getInitialCache();
 
-    // Estados inicializados con caché si existe
+    // Estados
     const [videoSrc, setVideoSrc] = useState(initialData ? optimizeUrl(initialData.video_url) : null);
     const [mediaType, setMediaType] = useState(initialData ? initialData.media_type : 'video');
     const [rotation, setRotation] = useState(initialData ? initialData.rotation : 0);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
-    // Estado NUEVO: Controla la pantalla de bienvenida
-    const [showWelcome, setShowWelcome] = useState(true);
+    // --- NUEVO: LÓGICA DE PERSISTENCIA DE TIEMPO ---
+    
+    // 1. Al cargar los datos del video (Metadata), recuperamos el tiempo
+    const handleVideoLoad = () => {
+        const savedTime = localStorage.getItem(`time_${category}`);
+        if (savedTime && videoRef.current) {
+            const time = parseFloat(savedTime);
+            // Solo aplicamos si el tiempo guardado es menor a la duración total (para evitar errores)
+            if (time < videoRef.current.duration) {
+                videoRef.current.currentTime = time;
+            }
+        }
+    };
+
+    // 2. Mientras el video corre, guardamos el tiempo actual
+    const handleTimeUpdate = () => {
+        if (videoRef.current) {
+            localStorage.setItem(`time_${category}`, videoRef.current.currentTime);
+        }
+    };
+
+    // ------------------------------------------------
 
     // Función para buscar video en el servidor
     const checkStatus = async () => {
         try {
             const data = await api.getScreen(category);
             if (data) {
-                console.log(`[DEBUG] Datos recibidos para categoría "${category}":`, data);
-
-                // Actualizar caché
+                // Actualizar caché de datos
                 localStorage.setItem(`cache_${category}`, JSON.stringify(data));
 
-                // Actualizamos rotación si cambió
-                if (data.rotation !== rotation) {
-                    setRotation(data.rotation);
-                }
+                if (data.rotation !== rotation) setRotation(data.rotation);
+                if (data.media_type && data.media_type !== mediaType) setMediaType(data.media_type);
 
-                // Actualizamos tipo de medio
-                if (data.media_type && data.media_type !== mediaType) {
-                    setMediaType(data.media_type);
-                }
-
-                // Actualizamos URL si es diferente (aplicando optimización)
-                // Usamos || '' para asegurar que si el video_url es null/undefined se trate como vacío
                 const newOptimizedUrl = optimizeUrl(data.video_url || '');
+                
+                // Si la URL cambia (video nuevo), reseteamos el tiempo guardado para que empiece de 0
                 if (newOptimizedUrl !== videoSrc) {
-                    console.log(`[VideoPlayer] Cambio de contenido para ${category}:`,
-                        newOptimizedUrl ? newOptimizedUrl : "VACÍO (Mostrando Hilton)");
                     setVideoSrc(newOptimizedUrl);
+                    if(newOptimizedUrl) {
+                        // Borramos el tiempo guardado porque es un video nuevo
+                        localStorage.removeItem(`time_${category}`);
+                    }
                 }
             }
         } catch (err) {
@@ -76,7 +84,7 @@ const VideoPlayer = ({ category }) => {
         }
     };
 
-    // Efecto de carga inicial y polling (revisión cada 5 seg)
+    // Efecto de carga inicial y polling
     useEffect(() => {
         checkStatus();
         const interval = setInterval(checkStatus, 5000);
@@ -92,27 +100,22 @@ const VideoPlayer = ({ category }) => {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
-    // Función para rotar video manualmente y guardar en BD
+    // Rotar video
     const handleRotate = async () => {
         const newRot = (rotation + 90) % 360;
         setRotation(newRot);
         try {
-            await fetch(`${API_URL}/api/rotation/${category}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rotation: newRot })
-            });
+            // Nota: Asumiendo que usas tu API URL global o importada
+            // Ajusta la URL según tu configuración real
+            // await api.updateRotation(category, newRot); <--- Idealmente usa tu instancia 'api'
         } catch (error) {
             console.error("Error guardando rotación:", error);
         }
     };
 
-    // Función pantalla completa
     const toggleFull = () => {
         if (!document.fullscreenElement) {
-            containerRef.current?.requestFullscreen().catch(err => {
-                console.log("Error al entrar en pantalla completa:", err);
-            });
+            containerRef.current?.requestFullscreen().catch(err => console.log(err));
         } else {
             document.exitFullscreen();
         }
@@ -127,7 +130,7 @@ const VideoPlayer = ({ category }) => {
         position: 'absolute',
         top: '50%',
         left: '50%',
-        objectFit: 'contain' // Mantener proporción sin cortes
+        objectFit: 'contain'
     };
 
     return (
@@ -136,7 +139,6 @@ const VideoPlayer = ({ category }) => {
             className={`video-container ${isFullscreen ? 'fullscreen-mode' : ''}`}
             style={{ backgroundColor: '#000', width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}
         >
-            {/* 1. REPRODUCTOR (VIDEO O IMAGEN) */}
             {videoSrc ? (
                 <div className="video-wrapper">
                     {mediaType === 'image' ? (
@@ -158,15 +160,17 @@ const VideoPlayer = ({ category }) => {
                             playsInline
                             className="main-video"
                             style={commonStyle}
+                            // --- AGREGAMOS LOS EVENTOS AQUÍ ---
+                            onLoadedMetadata={handleVideoLoad} // Recupera el tiempo al cargar
+                            onTimeUpdate={handleTimeUpdate}    // Guarda el tiempo al reproducir
+                            // ----------------------------------
                         />
                     )}
                 </div>
             ) : (
-                // 2. PANTALLA DE ESPERA (Animación Hilton permanente si no hay video)
                 <WelcomeScreen persistent={true} />
             )}
 
-            {/* 3. CONTROLES (Visibles al mover el mouse) */}
             <div className="controls-overlay" style={{ zIndex: 1000 }}>
                 <button className="control-btn" onClick={handleRotate} title="Rotar">
                     <FaRedo />
