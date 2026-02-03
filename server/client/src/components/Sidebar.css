@@ -1,0 +1,195 @@
+/* Sidebar.css */
+
+/* Contenedor principal */
+.sidebar {
+  height: 100%;
+  width: 250px;
+  /* Ancho expandido por defecto */
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: rgba(20, 20, 20, 0.95);
+  color: white;
+  transition: width 0.3s ease;
+  /* Transición suave de ancho */
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  /* Oculta el contenido que se desborda al colapsar */
+
+  /* IMPORTANTE: Para que gane al video */
+  position: relative;
+  z-index: 20000;
+  white-space: nowrap;
+  /* Evita que el texto se rompa */
+}
+
+.sidebar.collapsed {
+  width: 80px;
+  /* Ancho colapsado */
+  padding: 20px 10px;
+  /* Reducir padding horizontal */
+}
+
+/* Efecto Vidrio (Glassmorphism) */
+.glass {
+  background: rgba(25, 25, 25, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Logo */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.logo-icon-img {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  /* Evita que se aplaste */
+  object-fit: contain;
+}
+
+.logo-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .logo-text {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Navegación */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  /* Empuja el footer hacia abajo */
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  text-decoration: none;
+  color: #ffffff;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  /* Centrar iconos cuando está colapsado */
+  padding: 12px 0;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(5px);
+}
+
+.sidebar.collapsed .nav-item:hover {
+  transform: none;
+  /* Sin desplazamiento en colapsado */
+}
+
+.nav-item.active {
+  background: #007bff;
+  color: white;
+  box-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
+}
+
+.icon {
+  font-size: 1.2rem;
+  min-width: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.label {
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .label {
+  opacity: 0;
+  display: none;
+  /* Ocultar totalmente para no ocupar espacio */
+}
+
+/* Footer y Botón de Candado */
+.footer-area {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.qr-container {
+  text-align: center;
+  opacity: 0.8;
+  transition: opacity 0.3s, height 0.3s;
+}
+
+.sidebar.collapsed .qr-container {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
+}
+
+.qr-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+}
+
+.qr-text {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  color: #ccc;
+}
+
+/* EL BOTÓN QUE NO JALABA */
+.admin-lock {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ccc;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  /* IMPORTANTE: Manita al pasar mouse */
+  transition: 0.3s;
+  font-size: 1.1rem;
+}
+
+.admin-lock:hover {
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff4444;
+  border-color: #ff4444;
+  transform: scale(1.1);
+}
