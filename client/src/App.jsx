@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 
 // --- IMPORTS DE TUS COMPONENTES ---
@@ -8,7 +8,7 @@ import LoginModal from './components/Admin/LoginModal';
 import Dashboard from './components/Admin/Dashboard';
 import WelcomeScreen from './components/WelcomeScreen';
 
-// Wrapper para leer parámetros de URL (ej: /screen/Restaurante)
+// Wrapper para leer parámetros de URL
 const ScreenWrapper = () => {
   const { category } = useParams();
   const decodedCategory = decodeURIComponent(category);
@@ -19,12 +19,34 @@ const InnerApp = () => {
   // --- ESTADOS ---
   const [showLogin, setShowLogin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false); // Controla si se ve el menú lateral
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- 1. COMANDO SECRETO (Ctrl + b) PARA MOSTRAR BARRA ---
+  // --- LÓGICA GESTOS MÓVIL (ZONA INVISIBLE) ---
+  const lastTapRef = useRef(0);
+  const tapCountRef = useRef(0);
+
+  const handleSecretCornerTap = () => {
+    const now = Date.now();
+    // Si pasan más de 400ms entre toques, reiniciamos el contador
+    if (now - lastTapRef.current > 400) {
+      tapCountRef.current = 0;
+    }
+
+    lastTapRef.current = now;
+    tapCountRef.current += 1;
+
+    // AL 3er TOQUE: Alternar Sidebar
+    if (tapCountRef.current >= 3) {
+      setShowSidebar(prev => !prev);
+      tapCountRef.current = 0; // Resetear
+    }
+  };
+  // ---------------------------------------------
+
+  // --- 1. COMANDO TECLADO (Ctrl + b) ---
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) {
@@ -35,19 +57,14 @@ const InnerApp = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // --- 2. VERIFICAR SESIÓN ADMIN ---
   // --- 2. VERIFICAR SESIÓN (Auto-Logout) ---
-  // NO recuperamos token de localStorage al inicio para obligar login al refrescar.
-
-  // Efecto: Cerrar sesión si navegas fuera de /admin
   useEffect(() => {
     if (isAdmin && !location.pathname.startsWith('/admin')) {
       handleLogout();
     }
   }, [location]);
 
-  // --- HANDLERS (Funciones) ---
-
+  // --- HANDLERS ---
   const handleLoginSuccess = (token) => {
     localStorage.setItem('token', token);
     setIsAdmin(true);
@@ -59,15 +76,14 @@ const InnerApp = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsAdmin(false);
-    navigate('/inicio'); // Te saca al inicio
+    navigate('/inicio');
   }
 
-  // Esta es la función que activa el candado
   const handleAdminClick = () => {
     if (isAdmin) {
-      navigate('/admin'); // Si ya eres admin, entra directo
+      navigate('/admin');
     } else {
-      setShowLogin(true); // Si no, muestra el modal
+      setShowLogin(true);
     }
   };
 
@@ -80,38 +96,47 @@ const InnerApp = () => {
       backgroundColor: '#000'
     }}>
 
-      {/* --- A. SIDEBAR FLOTANTE --- */}
-      {/* Solo se renderiza si showSidebar es true (Ctrl + b) */}
+      {/* --- A. ZONA DE ACTIVACIÓN TÁCTIL (INVISIBLE) --- */}
+      {/* Esto permite abrir el menú en móvil tocando 3 veces la esquina superior izq */}
+      <div 
+        onClick={handleSecretCornerTap}
+        style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100px',  // Zona de 100x100 pixeles
+            height: '100px',
+            zIndex: 19000,   // Debajo del Sidebar (20000) pero encima del video
+            cursor: 'default', // Para no mostrar manita en PC
+            // background: 'rgba(255,0,0,0.3)' // <--- DESCOMENTAR PARA VER LA ZONA MIENTRAS PRUEBAS
+            background: 'transparent'
+        }}
+      />
+
+      {/* --- B. SIDEBAR FLOTANTE --- */}
       <div style={{
         position: 'absolute',
         top: 0,
-        left: showSidebar ? 0 : '-300px', // Animación simple o ocultamiento
+        left: showSidebar ? 0 : '-300px',
         height: '100%',
-        zIndex: 20000, // ¡MUY IMPORTANTE! Encima de todo
+        zIndex: 20000, // Cubre la zona táctil cuando está abierto
         transition: 'left 0.3s ease',
-        display: showSidebar ? 'block' : 'none' // Ocultar del DOM si no se usa
+        display: 'block' // Siempre en DOM para la animación
       }}>
-        {/* Aquí pasamos la función al componente hijo */}
         <Sidebar onAdminClick={handleAdminClick} />
       </div>
 
-      {/* --- B. ÁREA DE CONTENIDO (VIDEOS / WELCOME) --- */}
+      {/* --- C. ÁREA DE CONTENIDO (VIDEOS) --- */}
       <div className="content-area" style={{ width: '100%', height: '100%' }}>
         <Routes>
-          {/* 1. Ruta Raíz: Pantalla Hilton Infinita */}
           <Route path="/" element={<WelcomeScreen />} />
-
-          {/* 2. Rutas de Canales Específicos */}
           <Route path="/inicio" element={<VideoPlayer key="Inicio" category="Inicio" />} />
           <Route path="/hh" element={<VideoPlayer key="HH" category="HH" />} />
           <Route path="/service-room" element={<VideoPlayer key="Room Service" category="Room Service" />} />
           <Route path="/promociones" element={<VideoPlayer key="Promociones" category="Promociones" />} />
           <Route path="/clientes" element={<VideoPlayer key="Clientes" category="Clientes" />} />
-
-          {/* 3. Ruta Dinámica (por si usas QR o enlaces externos) */}
           <Route path="/screen/:category" element={<ScreenWrapper />} />
-
-          {/* 4. Ruta Protegida de Admin */}
+          
           <Route
             path="/admin"
             element={isAdmin ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/" />}
@@ -119,7 +144,7 @@ const InnerApp = () => {
         </Routes>
       </div>
 
-      {/* --- C. MODAL DE LOGIN (FLOTANTE) --- */}
+      {/* --- D. MODAL DE LOGIN --- */}
       {showLogin && (
         <div style={{
           position: 'fixed',
@@ -127,11 +152,11 @@ const InnerApp = () => {
           left: 0,
           width: '100vw',
           height: '100vh',
-          zIndex: 30000, // EL MÁS ALTO DE TODOS
+          zIndex: 30000,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: 'rgba(0,0,0,0.6)' // Fondo oscuro semitransparente
+          backgroundColor: 'rgba(0,0,0,0.6)'
         }}>
           <LoginModal
             onClose={() => setShowLogin(false)}
