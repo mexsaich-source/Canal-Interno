@@ -34,47 +34,42 @@ const VideoPlayer = ({ category }) => {
     const [rotation, setRotation] = useState(initialData ? initialData.rotation : 0);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
-    // --- NUEVO: LÓGICA DE PERSISTENCIA DE TIEMPO ---
-    
-    // 1. Al cargar los datos del video (Metadata), recuperamos el tiempo
+    // --- PERSISTENCIA DE TIEMPO (VIDEO) ---
     const handleVideoLoad = () => {
         const savedTime = localStorage.getItem(`time_${category}`);
         if (savedTime && videoRef.current) {
             const time = parseFloat(savedTime);
-            // Solo aplicamos si el tiempo guardado es menor a la duración total (para evitar errores)
             if (time < videoRef.current.duration) {
                 videoRef.current.currentTime = time;
             }
         }
     };
 
-    // 2. Mientras el video corre, guardamos el tiempo actual
     const handleTimeUpdate = () => {
         if (videoRef.current) {
             localStorage.setItem(`time_${category}`, videoRef.current.currentTime);
         }
     };
+    // --------------------------------------
 
-    // ------------------------------------------------
-
-    // Función para buscar video en el servidor
+    // Función para buscar datos en el servidor
     const checkStatus = async () => {
         try {
             const data = await api.getScreen(category);
             if (data) {
-                // Actualizar caché de datos
+                // Actualizar caché COMPLETA
                 localStorage.setItem(`cache_${category}`, JSON.stringify(data));
 
+                // Solo actualizamos rotación si viene diferente del servidor
+                // (Esto es seguridad, pero nuestra función manual handleRotate ya lo habrá hecho)
                 if (data.rotation !== rotation) setRotation(data.rotation);
+                
                 if (data.media_type && data.media_type !== mediaType) setMediaType(data.media_type);
 
                 const newOptimizedUrl = optimizeUrl(data.video_url || '');
-                
-                // Si la URL cambia (video nuevo), reseteamos el tiempo guardado para que empiece de 0
                 if (newOptimizedUrl !== videoSrc) {
                     setVideoSrc(newOptimizedUrl);
                     if(newOptimizedUrl) {
-                        // Borramos el tiempo guardado porque es un video nuevo
                         localStorage.removeItem(`time_${category}`);
                     }
                 }
@@ -84,14 +79,12 @@ const VideoPlayer = ({ category }) => {
         }
     };
 
-    // Efecto de carga inicial y polling
     useEffect(() => {
         checkStatus();
         const interval = setInterval(checkStatus, 5000);
         return () => clearInterval(interval);
     }, [category]);
 
-    // Detector de pantalla completa
     useEffect(() => {
         const handleFullscreenChange = () => {
             setIsFullscreen(!!document.fullscreenElement);
@@ -100,16 +93,43 @@ const VideoPlayer = ({ category }) => {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
-    // Rotar video
+    // --- CAMBIO CLAVE AQUÍ ---
     const handleRotate = async () => {
         const newRot = (rotation + 90) % 360;
+        
+        // 1. Actualizar estado visual inmediatamente
         setRotation(newRot);
+
+        // 2. ACTUALIZAR LOCALSTORAGE MANUALMENTE (Para persistencia al refrescar)
+        // Obtenemos lo que ya hay en caché, le cambiamos la rotación y lo guardamos de nuevo.
+        const currentCache = localStorage.getItem(`cache_${category}`);
+        if (currentCache) {
+            try {
+                const parsedCache = JSON.parse(currentCache);
+                parsedCache.rotation = newRot; // Sobreescribimos la rotación
+                localStorage.setItem(`cache_${category}`, JSON.stringify(parsedCache));
+            } catch (e) {
+                console.error("Error actualizando cache local de rotación", e);
+            }
+        }
+
+        // 3. Enviar al servidor (en segundo plano)
         try {
-            // Nota: Asumiendo que usas tu API URL global o importada
-            // Ajusta la URL según tu configuración real
-            // await api.updateRotation(category, newRot); <--- Idealmente usa tu instancia 'api'
+             // Asegúrate de que esta URL sea la correcta para tu backend
+             // Si usas la instancia 'api', sería algo como: await api.updateRotation(category, newRot);
+             // Aquí dejo un fetch genérico basado en tu código anterior:
+             /* await fetch(`${process.env.REACT_APP_API_URL}/api/rotation/${category}`, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ rotation: newRot })
+             });
+             */
+             // O si tienes el método en api.js:
+             if (api.updateRotation) {
+                 await api.updateRotation(category, newRot);
+             }
         } catch (error) {
-            console.error("Error guardando rotación:", error);
+            console.error("Error guardando rotación en servidor:", error);
         }
     };
 
@@ -160,10 +180,8 @@ const VideoPlayer = ({ category }) => {
                             playsInline
                             className="main-video"
                             style={commonStyle}
-                            // --- AGREGAMOS LOS EVENTOS AQUÍ ---
-                            onLoadedMetadata={handleVideoLoad} // Recupera el tiempo al cargar
-                            onTimeUpdate={handleTimeUpdate}    // Guarda el tiempo al reproducir
-                            // ----------------------------------
+                            onLoadedMetadata={handleVideoLoad}
+                            onTimeUpdate={handleTimeUpdate}
                         />
                     )}
                 </div>
