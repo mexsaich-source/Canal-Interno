@@ -2,32 +2,28 @@
 
 /* Contenedor principal */
 .sidebar {
-  height: 100%;
+  /* --- CAMBIO CLAVE: ALTO FIJO --- */
+  height: 100vh;           /* Ocupa exactamente el alto de la pantalla */
+  max-height: 100vh;       /* Asegura que no crezca más */
+  /* ------------------------------- */
+  
   width: 250px;
-  /* Ancho expandido por defecto */
   display: flex;
-  flex-direction: column;
+  flex-direction: column;  /* Organiza elementos en columna */
   padding: 20px;
   background: rgba(20, 20, 20, 0.95);
   color: white;
   transition: width 0.3s ease;
-  /* Transición suave de ancho */
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-  /* Oculta el contenido que se desborda al colapsar */
-
-  /* IMPORTANTE: Para que gane al video */
+  overflow: hidden;        /* Evita scroll en la barra general, lo delegamos al menú */
   position: relative;
   z-index: 20000;
   white-space: nowrap;
-  /* Evita que el texto se rompa */
 }
 
 .sidebar.collapsed {
   width: 80px;
-  /* Ancho colapsado */
   padding: 20px 10px;
-  /* Reducir padding horizontal */
 }
 
 /* Efecto Vidrio (Glassmorphism) */
@@ -38,14 +34,15 @@
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
-/* Logo */
+/* Logo (Se queda fijo arriba por defecto en flex column) */
 .logo-area {
   display: flex;
   align-items: center;
   gap: 15px;
-  margin-bottom: 40px;
+  margin-bottom: 20px; /* Reduje un poco el margen */
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0; /* IMPORTANTE: El logo no se aplasta */
   overflow: hidden;
 }
 
@@ -53,7 +50,6 @@
   width: 40px;
   height: 40px;
   min-width: 40px;
-  /* Evita que se aplaste */
   object-fit: contain;
 }
 
@@ -70,13 +66,29 @@
   pointer-events: none;
 }
 
-/* Navegación */
+/* --- NAVEGACIÓN (EL ÁREA QUE HACE SCROLL) --- */
 .nav-menu {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1;
-  /* Empuja el footer hacia abajo */
+
+  /* LA MAGIA DEL SCROLL: */
+  flex: 1;           /* Ocupa todo el espacio sobrante entre el Logo y el Footer */
+  overflow-y: auto;  /* Si hay muchas pantallas, aparece scroll AQUÍ */
+  overflow-x: hidden;
+  min-height: 0;     /* Necesario para que el scroll funcione en flexbox */
+  
+  /* Margen para que no pegue con el footer al bajar */
+  padding-bottom: 10px;
+  
+  /* Ocultar barra de scroll (Estético) */
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE */
+}
+
+/* Ocultar barra de scroll en Chrome/Edge/Safari */
+.nav-menu::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
@@ -88,12 +100,11 @@
   color: #ffffff;
   border-radius: 12px;
   transition: all 0.3s ease;
-  overflow: hidden;
+  flex-shrink: 0; /* Evita que los botones se aplasten si hay muchos */
 }
 
 .sidebar.collapsed .nav-item {
   justify-content: center;
-  /* Centrar iconos cuando está colapsado */
   padding: 12px 0;
 }
 
@@ -105,7 +116,6 @@
 
 .sidebar.collapsed .nav-item:hover {
   transform: none;
-  /* Sin desplazamiento en colapsado */
 }
 
 .nav-item.active {
@@ -129,18 +139,20 @@
 .sidebar.collapsed .label {
   opacity: 0;
   display: none;
-  /* Ocultar totalmente para no ocupar espacio */
 }
 
-/* Footer y Botón de Candado */
+/* --- FOOTER (SE QUEDA FIJO ABAJO) --- */
 .footer-area {
-  margin-top: auto;
+  margin-top: auto; /* Empuja hacia abajo (seguro adicional) */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  
+  flex-shrink: 0; /* CRUCIAL: Impide que el footer desaparezca o se encoja */
+  background: transparent; /* O el color de fondo si quieres tapar el scroll detrás */
   overflow: hidden;
 }
 
