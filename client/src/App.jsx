@@ -17,7 +17,7 @@ const ScreenWrapper = () => {
 const InnerApp = () => {
   // --- ESTADOS ---
   const [showLogin, setShowLogin] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(!!localStorage.getItem('token'));
   const [showSidebar, setShowSidebar] = useState(false);
 
   const navigate = useNavigate();
@@ -56,12 +56,9 @@ const InnerApp = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // --- 2. VERIFICAR SESIÓN (Auto-Logout) ---
-  useEffect(() => {
-    if (isAdmin && !location.pathname.startsWith('/admin')) {
-      handleLogout();
-    }
-  }, [location, isAdmin]);
+  // --- 2. VERIFICAR SESIÓN ---
+  // El auto-logout al navegar fuera de /admin causaba problemas con la redirección.
+  // Ahora manejamos el acceso solo mediante la protección de rutas en el render.
 
   // --- HANDLERS ---
   const handleLoginSuccess = (token) => {
@@ -97,17 +94,17 @@ const InnerApp = () => {
 
       {/* --- A. ZONA DE ACTIVACIÓN TÁCTIL (INVISIBLE) --- */}
       {/* Esto permite abrir el menú en móvil tocando 3 veces la esquina superior izq */}
-      <div 
+      <div
         onClick={handleSecretCornerTap}
         style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100px',  // Zona de 100x100 pixeles
-            height: '100px',
-            zIndex: 19000,   // Debajo del Sidebar (20000) pero encima del video
-            cursor: 'default', // Para no mostrar manita en PC
-            background: 'transparent'
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100px',  // Zona de 100x100 pixeles
+          height: '100px',
+          zIndex: 19000,   // Debajo del Sidebar (20000) pero encima del video
+          cursor: 'default', // Para no mostrar manita en PC
+          background: 'transparent'
         }}
       />
 
@@ -135,7 +132,7 @@ const InnerApp = () => {
           <Route path="/promociones" element={<VideoPlayer key="Promociones" category="Promociones" />} />
           <Route path="/clientes" element={<VideoPlayer key="Clientes" category="Clientes" />} />
           <Route path="/screen/:category" element={<ScreenWrapper />} />
-          
+
           <Route
             path="/admin"
             element={isAdmin ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/inicio" />}

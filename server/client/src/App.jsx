@@ -17,7 +17,7 @@ const ScreenWrapper = () => {
 const InnerApp = () => {
   // --- ESTADOS ---
   const [showLogin, setShowLogin] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(!!localStorage.getItem('token'));
   const [showSidebar, setShowSidebar] = useState(false); // Controla si se ve el menú lateral
 
   const navigate = useNavigate();
@@ -35,15 +35,9 @@ const InnerApp = () => {
   }, []);
 
   // --- 2. VERIFICAR SESIÓN ADMIN ---
-  // --- 2. VERIFICAR SESIÓN (Auto-Logout) ---
-  // NO recuperamos token de localStorage al inicio para obligar login al refrescar.
-
-  // Efecto: Cerrar sesión si navegas fuera de /admin
-  useEffect(() => {
-    if (isAdmin && !location.pathname.startsWith('/admin')) {
-      handleLogout();
-    }
-  }, [location]);
+  // --- 2. VERIFICAR SESIÓN ---
+  // Eliminamos el efecto que cerraba sesión al navegar fuera de /admin, ya que
+  // rompía la redirección post-login.
 
   // --- HANDLERS (Funciones) ---
 
