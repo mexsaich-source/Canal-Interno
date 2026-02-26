@@ -1,0 +1,219 @@
+.dashboard-container {
+    min-height: 100vh;
+    width: 100%;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 30px;
+    padding-left: 100px;
+    /* Espacio para sidebar */
+    box-sizing: border-box;
+    overflow-y: auto;
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    margin-bottom: 40px;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.header-info h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #2d3436;
+}
+
+.header-info p {
+    margin: 5px 0 0 0;
+    color: #636e72;
+    font-size: 0.9rem;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: #ff7675;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: #d63031;
+    transform: scale(1.05);
+}
+
+.grid-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.card {
+    position: relative;
+    padding: 30px 20px;
+    border-radius: 20px;
+    text-align: center;
+    background: white;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.premium-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    color: var(--accent-color);
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+.card h3 {
+    margin: 10px 0 20px 0;
+    font-size: 1.3rem;
+    color: #2d3436;
+}
+
+.card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.upload-action {
+    background: #0984e3;
+    color: white;
+}
+
+.upload-action:hover {
+    background: #74b9ff;
+}
+
+.reset-action {
+    background: #fab1a0;
+    color: #d63031;
+}
+
+.reset-action:hover {
+    background: #ff7675;
+    color: white;
+}
+
+.screen-delete-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #dfe6e9;
+    border: none;
+    color: #636e72;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.screen-delete-btn:hover {
+    background: #ff7675;
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* Tarjeta de agregar */
+.add-card {
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px dashed #b2bec3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-screen-form {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.add-screen-form input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #b2bec3;
+    outline: none;
+}
+
+.add-screen-form button {
+    padding: 10px 15px;
+    background: #00b894;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.add-screen-form button:hover {
+    background: #55efc4;
+}
+
+.message-alert {
+    padding: 15px 25px;
+    margin-bottom: 30px;
+    border-radius: 12px;
+    font-weight: 500;
+    animation: slideDown 0.4s ease;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.message-alert.success {
+    background: #55efc4;
+    color: #006266;
+}
+
+.message-alert.error {
+    background: #ff7675;
+    color: white;
+}

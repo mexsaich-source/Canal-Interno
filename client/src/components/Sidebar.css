@@ -1,0 +1,205 @@
+/* Sidebar.css */
+
+/* Contenedor principal */
+.sidebar {
+  /* --- CAMBIO CLAVE: ALTO FIJO --- */
+  height: 100vh;           /* Ocupa exactamente el alto de la pantalla */
+  max-height: 100vh;       /* Asegura que no crezca más */
+  /* ------------------------------- */
+  
+  width: 250px;
+  display: flex;
+  flex-direction: column;  /* Organiza elementos en columna */
+  padding: 20px;
+  background: rgba(20, 20, 20, 0.95);
+  color: white;
+  transition: width 0.3s ease;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;        /* Evita scroll en la barra general, lo delegamos al menú */
+  position: relative;
+  z-index: 20000;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+  padding: 20px 10px;
+}
+
+/* Efecto Vidrio (Glassmorphism) */
+.glass {
+  background: rgba(25, 25, 25, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Logo (Se queda fijo arriba por defecto en flex column) */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px; /* Reduje un poco el margen */
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0; /* IMPORTANTE: El logo no se aplasta */
+  overflow: hidden;
+}
+
+.logo-icon-img {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  object-fit: contain;
+}
+
+.logo-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .logo-text {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- NAVEGACIÓN (EL ÁREA QUE HACE SCROLL) --- */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  /* LA MAGIA DEL SCROLL: */
+  flex: 1;           /* Ocupa todo el espacio sobrante entre el Logo y el Footer */
+  overflow-y: auto;  /* Si hay muchas pantallas, aparece scroll AQUÍ */
+  overflow-x: hidden;
+  min-height: 0;     /* Necesario para que el scroll funcione en flexbox */
+  
+  /* Margen para que no pegue con el footer al bajar */
+  padding-bottom: 10px;
+  
+  /* Ocultar barra de scroll (Estético) */
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE */
+}
+
+/* Ocultar barra de scroll en Chrome/Edge/Safari */
+.nav-menu::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  text-decoration: none;
+  color: #ffffff;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  flex-shrink: 0; /* Evita que los botones se aplasten si hay muchos */
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(5px);
+}
+
+.sidebar.collapsed .nav-item:hover {
+  transform: none;
+}
+
+.nav-item.active {
+  background: #007bff;
+  color: white;
+  box-shadow: 0 0 15px rgba(0, 123, 255, 0.4);
+}
+
+.icon {
+  font-size: 1.2rem;
+  min-width: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.label {
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.sidebar.collapsed .label {
+  opacity: 0;
+  display: none;
+}
+
+/* --- FOOTER (SE QUEDA FIJO ABAJO) --- */
+.footer-area {
+  margin-top: auto; /* Empuja hacia abajo (seguro adicional) */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  
+  flex-shrink: 0; /* CRUCIAL: Impide que el footer desaparezca o se encoja */
+  background: transparent; /* O el color de fondo si quieres tapar el scroll detrás */
+  overflow: hidden;
+}
+
+.qr-container {
+  text-align: center;
+  opacity: 0.8;
+  transition: opacity 0.3s, height 0.3s;
+}
+
+.sidebar.collapsed .qr-container {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
+}
+
+.qr-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+}
+
+.qr-text {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  color: #ccc;
+}
+
+.admin-lock {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ccc;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 1.1rem;
+}
+
+.admin-lock:hover {
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff4444;
+  border-color: #ff4444;
+  transform: scale(1.1);
+}

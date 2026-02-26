@@ -1,0 +1,127 @@
+.welcome-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: white;
+    animation: fadeIn 1s ease-in-out, colorCycle 12s infinite ease-in-out;
+}
+
+@keyframes colorCycle {
+
+    0%,
+    45% {
+        background-color: #002D62;
+        color: #ffffff;
+    }
+
+    /* Azul Hilton, Letras Blancas */
+    50%,
+    95% {
+        background-color: #000000;
+        color: #ffffff;
+    }
+
+    /* Negro, Letras Azules */
+    100% {
+        background-color: #002D62;
+        color: #ffffff;
+    }
+}
+
+@keyframes slowTracking {
+
+    0%,
+    100% {
+        letter-spacing: 12px;
+        transform: scale(1);
+    }
+
+    50% {
+        letter-spacing: 14px;
+        transform: scale(1.02);
+    }
+}
+
+.welcome-title {
+    font-size: 5rem;
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 12px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    color: inherit;
+    /* Heredar del contenedor para la animación */
+    animation: slideTracking 2s ease-out, slowTracking 10s infinite ease-in-out 2s;
+}
+
+.welcome-subtitle {
+    letter-spacing: 5px;
+    font-size: 1.2rem;
+    color: inherit;
+    /* Heredar del contenedor */
+    opacity: 0.8;
+    animation: fadeIn 3s ease-in-out;
+}
+
+.welcome-line {
+    margin-top: 50px;
+    width: 150px;
+    height: 1px;
+    background: currentColor;
+    /* Usar el color del texto actual */
+    animation: expandLine 2s ease-in-out infinite alternate;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideTracking {
+    from {
+        letter-spacing: 2px;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        letter-spacing: 12px;
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes expandLine {
+    from {
+        width: 50px;
+        opacity: 0.3;
+    }
+
+    to {
+        width: 200px;
+        opacity: 0.8;
+    }
+}
+
+/* Modo placeholder con ciclo de color eterno */
+.welcome-overlay.placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    animation: colorCycle 12s infinite ease-in-out;
+    z-index: 1;
+}
