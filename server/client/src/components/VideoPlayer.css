@@ -23,6 +23,10 @@
     animation: fadeInVideo 1.5s ease;
 }
 
+.main-video.fade-in-slide {
+    animation: fadeInSlide 1s ease-in-out;
+}
+
 @keyframes fadeInVideo {
     from {
         opacity: 0;
@@ -35,19 +39,36 @@
     }
 }
 
+@keyframes fadeInSlide {
+    from {
+        opacity: 0.3;
+        transform: scale(0.98);
+        filter: brightness(0.5) blur(5px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1) blur(0);
+    }
+}
+
 .controls-overlay {
     position: absolute;
     bottom: 20px;
     right: 20px;
     display: flex;
-    gap: 15px;
+    /* gap: 15px; */
     z-index: 10;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     padding: 10px;
     border-radius: 50px;
 
     opacity: 0;
     transition: opacity 0.3s ease;
+}
+
+.controls-overlay .control-btn {
+    margin: 0 7px;
 }
 
 .video-container:hover .controls-overlay {

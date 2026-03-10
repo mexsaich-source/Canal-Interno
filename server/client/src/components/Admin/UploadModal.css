@@ -1,0 +1,96 @@
+.upload-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 40000;
+}
+
+.upload-modal-content {
+    padding: 30px;
+    border-radius: 12px;
+    width: 450px;
+    max-width: 90%;
+    color: white;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #222;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.upload-modal-content .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.upload-modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.upload-modal-content .form-group {
+    margin-bottom: 20px;
+}
+
+.upload-modal-content .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.upload-modal-content .form-group input[type="file"],
+.upload-modal-content .form-group input[type="datetime-local"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.upload-modal-content .form-group input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+.upload-submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent-color);
+    color: rgb(255, 255, 255);
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: filter 0.3s;
+    margin-top: 10px;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-submit-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+.upload-submit-btn:hover:not(:disabled) {
+    filter: brightness(1.1);
+}

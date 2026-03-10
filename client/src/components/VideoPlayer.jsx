@@ -28,10 +28,19 @@ const VideoPlayer = ({ category }) => {
 
     const initialData = getInitialCache();
 
+    // Parse Initial Playlist
+    let initialPlaylist = [];
+    if (initialData?.playlist && initialData.playlist.length > 0) {
+        initialPlaylist = initialData.playlist;
+    } else if (initialData?.video_url) {
+        initialPlaylist = [{ url: initialData.video_url, type: initialData.media_type, hasAudio: false }];
+    }
+
     // Estados
-    const [videoSrc, setVideoSrc] = useState(initialData ? optimizeUrl(initialData.video_url) : null);
-    const [mediaType, setMediaType] = useState(initialData ? initialData.media_type : 'video');
-    const [rotation, setRotation] = useState(initialData ? initialData.rotation : 0);
+    const [playlist, setPlaylist] = useState(initialPlaylist);
+    const [activePlaylist, setActivePlaylist] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [rotation, setRotation] = useState(initialData?.rotation || 0);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     // --- PERSISTENCIA DE TIEMPO (VIDEO) ---
@@ -60,18 +69,21 @@ const VideoPlayer = ({ category }) => {
                 // Actualizar caché COMPLETA
                 localStorage.setItem(`cache_${category}`, JSON.stringify(data));
 
-                // Solo actualizamos rotación si viene diferente del servidor
-                // (Esto es seguridad, pero nuestra función manual handleRotate ya lo habrá hecho)
+                // Asegurar rotación
                 if (data.rotation !== rotation) setRotation(data.rotation);
 
-                if (data.media_type && data.media_type !== mediaType) setMediaType(data.media_type);
-
-                const newOptimizedUrl = optimizeUrl(data.video_url || '');
-                if (newOptimizedUrl !== videoSrc) {
-                    setVideoSrc(newOptimizedUrl);
-                    if (newOptimizedUrl) {
-                        localStorage.removeItem(`time_${category}`);
-                    }
+                let newPlaylist = [];
+                if (data.playlist && data.playlist.length > 0) {
+                    newPlaylist = data.playlist;
+                } else if (data.video_url) {
+                    newPlaylist = [{ url: data.video_url, type: data.media_type, hasAudio: false }];
+                }
+                
+                // Si la playlist cambió, la actualizamos y reiniciamos
+                if (JSON.stringify(newPlaylist) !== JSON.stringify(playlist)) {
+                    setPlaylist(newPlaylist);
+                    setCurrentIndex(0);
+                    localStorage.removeItem(`time_${category}`);
                 }
             }
         } catch (err) {
@@ -81,9 +93,47 @@ const VideoPlayer = ({ category }) => {
 
     useEffect(() => {
         checkStatus();
-        const interval = setInterval(checkStatus, 5000);
+        const interval = setInterval(checkStatus, 5000); // 5s poll para ver cambios inmediatos
         return () => clearInterval(interval);
     }, [category]);
+
+    // LÓGICA DE HORARIOS / SCHEDULING
+    useEffect(() => {
+        const updateActive = () => {
+            const now = new Date();
+            const filtered = playlist.filter(item => {
+                if (item.scheduleStart && new Date(item.scheduleStart) > now) return false;
+                if (item.scheduleEnd && new Date(item.scheduleEnd) < now) return false;
+                return true;
+            });
+            
+            setActivePlaylist(prev => {
+                if (JSON.stringify(prev) !== JSON.stringify(filtered)) {
+                    setCurrentIndex(0); // Reiniciar al inicio cuando cambia la cartelera activa
+                    return filtered;
+                }
+                return prev;
+            });
+        };
+        updateActive();
+        const interval = setInterval(updateActive, 10000); // Chequear cada 10s si un evento empezó o terminó
+        return () => clearInterval(interval);
+    }, [playlist]);
+
+    const currentMedia = activePlaylist.length > 0 ? activePlaylist[currentIndex % activePlaylist.length] : null;
+    const isImage = currentMedia?.type === 'image';
+    const isSingleVideo = !isImage && activePlaylist.length === 1;
+
+    // LÓGICA DE PRESENTACIÓN / SLIDESHOW PARA IMÁGENES
+    useEffect(() => {
+        if (!currentMedia || !isImage || activePlaylist.length <= 1) return;
+
+        const timer = setTimeout(() => {
+            setCurrentIndex(prev => (prev + 1) % activePlaylist.length);
+        }, 10000); // 10 segundos por imagen
+        
+        return () => clearTimeout(timer);
+    }, [currentIndex, currentMedia, isImage, activePlaylist.length]);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -159,29 +209,30 @@ const VideoPlayer = ({ category }) => {
             className={`video-container ${isFullscreen ? 'fullscreen-mode' : ''}`}
             style={{ backgroundColor: '#000', width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}
         >
-            {videoSrc ? (
+            {currentMedia ? (
                 <div className="video-wrapper">
-                    {mediaType === 'image' ? (
+                    {isImage ? (
                         <img
-                            key={videoSrc}
-                            src={videoSrc}
+                            key={currentMedia.public_id || optimizeUrl(currentMedia.url)}
+                            src={optimizeUrl(currentMedia.url)}
                             alt="Pantalla"
-                            className="main-video"
+                            className="main-video fade-in-slide"
                             style={commonStyle}
                         />
                     ) : (
                         <video
-                            key={videoSrc}
+                            key={currentMedia.public_id || optimizeUrl(currentMedia.url)}
                             ref={videoRef}
-                            src={videoSrc}
+                            src={optimizeUrl(currentMedia.url)}
                             autoPlay
-                            loop
-                            muted
+                            loop={isSingleVideo}
+                            muted={!currentMedia.hasAudio}
                             playsInline
-                            className="main-video"
+                            className="main-video fade-in-slide"
                             style={commonStyle}
                             onLoadedMetadata={handleVideoLoad}
                             onTimeUpdate={handleTimeUpdate}
+                            onEnded={!isSingleVideo ? () => setCurrentIndex(prev => (prev + 1) % activePlaylist.length) : undefined}
                             onError={(e) => console.error("Error cargando video:", e)}
                             preload="auto"
                         />

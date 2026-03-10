@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaTrashAlt, FaTimes, FaPlus, FaCloudUploadAlt, FaSignOutAlt, FaTv } from 'react-icons/fa';
 import api from '../../api';
+import UploadModal from './UploadModal';
 import './Dashboard.css';
 
 const Dashboard = ({ onLogout }) => {
@@ -11,6 +12,9 @@ const Dashboard = ({ onLogout }) => {
     // Estado para nueva categoría
     const [newCategory, setNewCategory] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    
+    // Estado para el modal de subida
+    const [uploadModalCategory, setUploadModalCategory] = useState(null);
 
     // Cargar categorías al inicio
     useEffect(() => {
@@ -44,13 +48,7 @@ const Dashboard = ({ onLogout }) => {
         }
     };
 
-    const handleFileChange = async (category, e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append('video', file);
-
+    const handleUploadSubmit = async (category, formData) => {
         setUploading(category);
         setMessage(null);
 
@@ -63,7 +61,7 @@ const Dashboard = ({ onLogout }) => {
             setMessage({ type: 'error', text: `❌ Error al subir: ${error.response?.data?.error || error.message}` });
         } finally {
             setUploading(null);
-            e.target.value = null;
+            setUploadModalCategory(null);
         }
     };
 
@@ -139,20 +137,13 @@ const Dashboard = ({ onLogout }) => {
                             <h3>{cat}</h3>
 
                             <div className="card-actions">
-                                <label className="action-btn upload-action">
-                                    {uploading === cat ? (
-                                        <>⏳...</>
-                                    ) : (
-                                        <><FaCloudUploadAlt /> Subir</>
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept="video/mp4,video/webm,image/png,image/jpeg,image/jpg"
-                                        hidden
-                                        onChange={(e) => handleFileChange(cat, e)}
-                                        disabled={uploading === cat}
-                                    />
-                                </label>
+                                <button
+                                    className="action-btn upload-action"
+                                    onClick={() => setUploadModalCategory(cat)}
+                                    disabled={uploading === cat}
+                                >
+                                    {uploading === cat ? <>⏳...</> : <><FaCloudUploadAlt /> Subir</>}
+                                </button>
 
                                 <button
                                     className="action-btn reset-action"
@@ -183,6 +174,15 @@ const Dashboard = ({ onLogout }) => {
                     </div>
                 </div>
             </div>
+
+            {/* MODAL DE SUBIDA AVANZADA */}
+            {uploadModalCategory && (
+                <UploadModal
+                    category={uploadModalCategory}
+                    onClose={() => setUploadModalCategory(null)}
+                    onUpload={handleUploadSubmit}
+                />
+            )}
         </div>
     );
 };

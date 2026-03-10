@@ -49,6 +49,7 @@ const initDB = async () => {
             );
             
             ALTER TABLE screens ADD COLUMN IF NOT EXISTS media_type TEXT DEFAULT 'video';
+            ALTER TABLE screens ADD COLUMN IF NOT EXISTS playlist JSONB DEFAULT '[]'::jsonb;
         `);
 
         console.log('✅ TABLAS SQL VERIFICADAS');
@@ -177,31 +178,50 @@ app.post('/api/rotation/:category', async (req, res) => {
 });
 
 // PROTEGIDO: Upload
-app.post('/api/upload/:category', authenticateToken, upload.single('video'), async (req, res) => {
+app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), async (req, res) => {
     const { category } = req.params;
+    const { hasAudio, scheduleStart, scheduleEnd } = req.body;
     try {
-        if (!req.file) return res.status(400).json({ error: 'No se subió ningún archivo' });
+        if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No se subió ningún archivo' });
 
-        // Detectar si es video o imagen
-        const isImage = req.file.mimetype.startsWith('image/');
-        const mediaType = isImage ? 'image' : 'video';
-
-        // 1. Buscar si ya tenía algo para borrarlo de Cloudinary
-        const prevRes = await pool.query('SELECT public_id, media_type FROM screens WHERE category = $1', [category]);
-        if (prevRes.rows.length > 0 && prevRes.rows[0].public_id) {
-            await deleteFromCloudinary(prevRes.rows[0].public_id, prevRes.rows[0].media_type);
+        // 1. Borrar si ya tenía algo para no saturar Cloudinary
+        const prevRes = await pool.query('SELECT public_id, media_type, playlist FROM screens WHERE category = $1', [category]);
+        if (prevRes.rows.length > 0) {
+            const oldPlaylist = prevRes.rows[0].playlist || [];
+            for (const item of oldPlaylist) {
+                if (item.public_id) await deleteFromCloudinary(item.public_id, item.type);
+            }
+            if (prevRes.rows[0].public_id && oldPlaylist.length === 0) {
+                await deleteFromCloudinary(prevRes.rows[0].public_id, prevRes.rows[0].media_type);
+            }
         }
 
+        // Construir nueva playlist
+        const newPlaylist = req.files.map(file => {
+            const isImg = file.mimetype.startsWith('image/');
+            return {
+                url: file.path, 
+                type: isImg ? 'image' : 'video',
+                public_id: file.filename,
+                hasAudio: isImg ? false : (hasAudio === 'true'),
+                scheduleStart: scheduleStart || null,
+                scheduleEnd: scheduleEnd || null
+            };
+        });
+
+        // Retrocompatibilidad con sistemas viejos: Guardamos el primero en video_url
+        const first = newPlaylist[0];
+
         const query = `
-            INSERT INTO screens (category, video_url, public_id, media_type) VALUES ($1, $2, $3, $4)
-            ON CONFLICT (category) DO UPDATE SET video_url = $2, public_id = $3, media_type = $4 RETURNING *;
+            INSERT INTO screens (category, video_url, public_id, media_type, playlist) VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (category) DO UPDATE SET video_url = $2, public_id = $3, media_type = $4, playlist = $5 RETURNING *;
         `;
-        const result = await pool.query(query, [category, req.file.path, req.file.filename, mediaType]);
+        const result = await pool.query(query, [category, first.url, first.public_id, first.type, JSON.stringify(newPlaylist)]);
 
         res.json({ success: true, screen: result.rows[0] });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Error subiendo archivo' });
+        res.status(500).json({ error: 'Error subiendo archivo(s)' });
     }
 });
 
@@ -249,9 +269,15 @@ app.delete('/api/category/:category', authenticateToken, async (req, res) => {
 
     try {
         // Cleanup Cloudinary
-        const prevRes = await pool.query('SELECT public_id, media_type FROM screens WHERE category = $1', [category]);
-        if (prevRes.rows.length > 0 && prevRes.rows[0].public_id) {
-            await deleteFromCloudinary(prevRes.rows[0].public_id, prevRes.rows[0].media_type);
+        const prevRes = await pool.query('SELECT public_id, media_type, playlist FROM screens WHERE category = $1', [category]);
+        if (prevRes.rows.length > 0) {
+            const oldPlaylist = prevRes.rows[0].playlist || [];
+            for (const item of oldPlaylist) {
+                if (item.public_id) await deleteFromCloudinary(item.public_id, item.type);
+            }
+            if (prevRes.rows[0].public_id && oldPlaylist.length === 0) {
+                await deleteFromCloudinary(prevRes.rows[0].public_id, prevRes.rows[0].media_type);
+            }
         }
 
         await pool.query('DELETE FROM screens WHERE category = $1', [category]);
@@ -266,13 +292,19 @@ app.post('/api/screen/reset/:category', authenticateToken, async (req, res) => {
     const { category } = req.params;
     try {
         // Cleanup Cloudinary
-        const prevRes = await pool.query('SELECT public_id, media_type FROM screens WHERE category = $1', [category]);
-        if (prevRes.rows.length > 0 && prevRes.rows[0].public_id) {
-            await deleteFromCloudinary(prevRes.rows[0].public_id, prevRes.rows[0].media_type);
+        const prevRes = await pool.query('SELECT public_id, media_type, playlist FROM screens WHERE category = $1', [category]);
+        if (prevRes.rows.length > 0) {
+            const oldPlaylist = prevRes.rows[0].playlist || [];
+            for (const item of oldPlaylist) {
+                if (item.public_id) await deleteFromCloudinary(item.public_id, item.type);
+            }
+            if (prevRes.rows[0].public_id && oldPlaylist.length === 0) {
+                await deleteFromCloudinary(prevRes.rows[0].public_id, prevRes.rows[0].media_type);
+            }
         }
 
         await pool.query(
-            'UPDATE screens SET video_url = \'\', public_id = \'\', media_type = \'video\' WHERE category = $1',
+            'UPDATE screens SET video_url = \'\', public_id = \'\', media_type = \'video\', playlist = \'[]\'::jsonb WHERE category = $1',
             [category]
         );
         res.json({ success: true });
