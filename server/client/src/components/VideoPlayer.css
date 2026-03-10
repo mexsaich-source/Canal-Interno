@@ -41,14 +41,12 @@
 
 @keyframes fadeInSlide {
     from {
-        opacity: 0.3;
-        transform: scale(0.98);
-        filter: brightness(0.5) blur(5px);
+        opacity: 0.2;
+        filter: brightness(0.7);
     }
     to {
         opacity: 1;
-        transform: scale(1);
-        filter: brightness(1) blur(0);
+        filter: brightness(1);
     }
 }
 

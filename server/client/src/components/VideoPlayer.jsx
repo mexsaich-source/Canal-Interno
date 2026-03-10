@@ -130,7 +130,7 @@ const VideoPlayer = ({ category }) => {
 
         const timer = setTimeout(() => {
             setCurrentIndex(prev => (prev + 1) % activePlaylist.length);
-        }, 10000); // 10 segundos por imagen
+        }, 8000); // 8 segundos por imagen
         
         return () => clearTimeout(timer);
     }, [currentIndex, currentMedia, isImage, activePlaylist.length]);
