@@ -180,7 +180,7 @@ app.post('/api/rotation/:category', async (req, res) => {
 // PROTEGIDO: Upload
 app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), async (req, res) => {
     const { category } = req.params;
-    const { hasAudio, scheduleStart, scheduleEnd } = req.body;
+    const { hasAudio, scheduleStart, scheduleEnd, showClock } = req.body;
     try {
         if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No se subió ningún archivo' });
 
@@ -204,6 +204,7 @@ app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), 
                 type: isImg ? 'image' : 'video',
                 public_id: file.filename,
                 hasAudio: isImg ? false : (hasAudio === 'true'),
+                showClock: showClock === 'true',
                 scheduleStart: scheduleStart || null,
                 scheduleEnd: scheduleEnd || null
             };

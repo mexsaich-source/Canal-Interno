@@ -135,6 +135,9 @@ const VideoPlayer = ({ category }) => {
         return () => clearTimeout(timer);
     }, [currentIndex, currentMedia, isImage, activePlaylist.length]);
 
+    // Calcular si se debe mostrar el reloj (basado en el primer elemento de la playlist original cuando todo expira)
+    const shouldShowClock = playlist.length > 0 && playlist[0].showClock === true;
+
     useEffect(() => {
         const handleFullscreenChange = () => {
             setIsFullscreen(!!document.fullscreenElement);
@@ -239,7 +242,7 @@ const VideoPlayer = ({ category }) => {
                     )}
                 </div>
             ) : (
-                <WelcomeScreen persistent={true} />
+                <WelcomeScreen persistent={true} showClock={shouldShowClock} />
             )}
 
             <div className="controls-overlay" style={{ zIndex: 1000 }}>

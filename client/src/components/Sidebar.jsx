@@ -21,7 +21,6 @@ const Sidebar = ({ onAdminClick }) => {
         load();
     }, []);
 
-    // Mapa de iconos y rutas para categorías conocidas
     const getMenuInfo = (name) => {
         switch (name) {
             case 'Inicio': return { path: '/inicio', icon: <FaHome /> };
@@ -56,8 +55,7 @@ const Sidebar = ({ onAdminClick }) => {
                         <NavLink
                             key={cat}
                             to={path}
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        >
+                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                             <span className="icon">{icon}</span>
                             <span className="label">{cat}</span>
                         </NavLink>
