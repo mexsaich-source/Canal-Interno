@@ -7,7 +7,6 @@ const UploadModal = ({ category, onClose, onUpload }) => {
     const [hasAudio, setHasAudio] = useState(false);
     const [scheduleStart, setScheduleStart] = useState('');
     const [scheduleEnd, setScheduleEnd] = useState('');
-    const [showClock, setShowClock] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
     const handleFileChange = (e) => {
@@ -27,7 +26,6 @@ const UploadModal = ({ category, onClose, onUpload }) => {
         });
         
         formData.append('hasAudio', hasAudio);
-        formData.append('showClock', showClock);
         if (scheduleStart) formData.append('scheduleStart', new Date(scheduleStart).toISOString());
         if (scheduleEnd) formData.append('scheduleEnd', new Date(scheduleEnd).toISOString());
 
@@ -70,18 +68,6 @@ const UploadModal = ({ category, onClose, onUpload }) => {
                             </label>
                         </div>
                     )}
-
-                    <div className="form-group">
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                            <input 
-                                style={{ width: 'auto', marginRight: '10px' }}
-                                type="checkbox" 
-                                checked={showClock} 
-                                onChange={(e) => setShowClock(e.target.checked)} 
-                            />
-                            Mostrar hora/fecha (solo cuando la pantalla no tenga imagen/video activo)
-                        </label>
-                    </div>
 
                     <div className="form-group">
                         <label>🕒 Programar Inicio (Opcional)</label>

@@ -42,6 +42,7 @@ const VideoPlayer = ({ category }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [rotation, setRotation] = useState(initialData?.rotation || 0);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isClockEnabled, setIsClockEnabled] = useState(false);
 
     // --- PERSISTENCIA DE TIEMPO (VIDEO) ---
     const handleVideoLoad = () => {
@@ -135,8 +136,8 @@ const VideoPlayer = ({ category }) => {
         return () => clearTimeout(timer);
     }, [currentIndex, currentMedia, isImage, activePlaylist.length]);
 
-    // Calcular si se debe mostrar el reloj (basado en el primer elemento de la playlist original cuando todo expira)
-    const shouldShowClock = playlist.length > 0 && playlist[0].showClock === true;
+    // Remover extracción de "shouldShowClock" desde la playlist, en su lugar usamos el estado local del botón
+
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -242,10 +243,18 @@ const VideoPlayer = ({ category }) => {
                     )}
                 </div>
             ) : (
-                <WelcomeScreen persistent={true} showClock={shouldShowClock} />
+                <WelcomeScreen persistent={true} showClock={isClockEnabled} />
             )}
 
             <div className="controls-overlay" style={{ zIndex: 1000 }}>
+                <button 
+                    className="control-btn" 
+                    onClick={() => setIsClockEnabled(!isClockEnabled)} 
+                    title="Alternar Reloj"
+                    style={{ backgroundColor: isClockEnabled ? 'rgba(255,255,255,0.3)' : 'transparent' }}
+                >
+                    🕒
+                </button>
                 <button className="control-btn" onClick={handleRotate} title="Rotar">
                     <FaRedo />
                 </button>
