@@ -44,9 +44,18 @@ const VideoPlayer = ({ category }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isClockEnabled, setIsClockEnabled] = useState(false);
 
+    // --- SOLUCIÓN BUG IMÁGENES: Referencia a la playlist actual ---
+    const playlistRef = useRef(playlist);
+    useEffect(() => {
+        playlistRef.current = playlist;
+    }, [playlist]);
+
+    // Para evitar que videos distintos colisionen con su tiempo guardado
+    const currentMediaUrl = activePlaylist[currentIndex]?.url || 'default';
+
     // --- PERSISTENCIA DE TIEMPO (VIDEO) ---
     const handleVideoLoad = () => {
-        const savedTime = localStorage.getItem(`time_${category}`);
+        const savedTime = localStorage.getItem(`time_${category}_${currentMediaUrl}`);
         if (savedTime && videoRef.current) {
             const time = parseFloat(savedTime);
             if (time < videoRef.current.duration) {
@@ -57,7 +66,7 @@ const VideoPlayer = ({ category }) => {
 
     const handleTimeUpdate = () => {
         if (videoRef.current) {
-            localStorage.setItem(`time_${category}`, videoRef.current.currentTime);
+            localStorage.setItem(`time_${category}_${currentMediaUrl}`, videoRef.current.currentTime);
         }
     };
     // --------------------------------------
@@ -80,11 +89,11 @@ const VideoPlayer = ({ category }) => {
                     newPlaylist = [{ url: data.video_url, type: data.media_type, hasAudio: false }];
                 }
 
-                // Si la playlist cambió, la actualizamos y reiniciamos
-                if (JSON.stringify(newPlaylist) !== JSON.stringify(playlist)) {
+                // Aquí usamos playlistRef.current en lugar de playlist
+                // Esto evita que el slider se reinicie al índice 0 constantemente
+                if (JSON.stringify(newPlaylist) !== JSON.stringify(playlistRef.current)) {
                     setPlaylist(newPlaylist);
                     setCurrentIndex(0);
-                    localStorage.removeItem(`time_${category}`);
                 }
             }
         } catch (err) {
@@ -96,7 +105,7 @@ const VideoPlayer = ({ category }) => {
         checkStatus();
         const interval = setInterval(checkStatus, 5000); // 5s poll para ver cambios inmediatos
         return () => clearInterval(interval);
-    }, [category]);
+    }, [category]); // Dependencia solo category, checkStatus usa refs para no estancarse
 
     // LÓGICA DE HORARIOS / SCHEDULING
     useEffect(() => {
@@ -136,9 +145,6 @@ const VideoPlayer = ({ category }) => {
         return () => clearTimeout(timer);
     }, [currentIndex, currentMedia, isImage, activePlaylist.length]);
 
-    // Remover extracción de "shouldShowClock" desde la playlist, en su lugar usamos el estado local del botón
-
-
     useEffect(() => {
         const handleFullscreenChange = () => {
             setIsFullscreen(!!document.fullscreenElement);
@@ -147,15 +153,13 @@ const VideoPlayer = ({ category }) => {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
-    // --- CAMBIO CLAVE AQUÍ ---
     const handleRotate = async () => {
         const newRot = (rotation + 90) % 360;
 
         // 1. Actualizar estado visual inmediatamente
         setRotation(newRot);
 
-        // 2. ACTUALIZAR LOCALSTORAGE MANUALMENTE (Para persistencia al refrescar)
-        // Obtenemos lo que ya hay en caché, le cambiamos la rotación y lo guardamos de nuevo.
+        // 2. ACTUALIZAR LOCALSTORAGE MANUALMENTE
         const currentCache = localStorage.getItem(`cache_${category}`);
         if (currentCache) {
             try {
@@ -167,18 +171,8 @@ const VideoPlayer = ({ category }) => {
             }
         }
 
-        // 3. Enviar al servidor (en segundo plano)
+        // 3. Enviar al servidor
         try {
-            // Asegúrate de que esta URL sea la correcta para tu backend
-            // Si usas la instancia 'api', sería algo como: await api.updateRotation(category, newRot);
-            // Aquí dejo un fetch genérico basado en tu código anterior:
-            /* await fetch(`${process.env.REACT_APP_API_URL}/api/rotation/${category}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rotation: newRot })
-            });
-            */
-            // O si tienes el método en api.js:
             if (api.updateRotation) {
                 await api.updateRotation(category, newRot);
             }
