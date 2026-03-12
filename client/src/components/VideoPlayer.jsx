@@ -79,7 +79,7 @@ const VideoPlayer = ({ category }) => {
                 } else if (data.video_url) {
                     newPlaylist = [{ url: data.video_url, type: data.media_type, hasAudio: false }];
                 }
-                
+
                 // Si la playlist cambió, la actualizamos y reiniciamos
                 if (JSON.stringify(newPlaylist) !== JSON.stringify(playlist)) {
                     setPlaylist(newPlaylist);
@@ -107,7 +107,7 @@ const VideoPlayer = ({ category }) => {
                 if (item.scheduleEnd && new Date(item.scheduleEnd) < now) return false;
                 return true;
             });
-            
+
             setActivePlaylist(prev => {
                 if (JSON.stringify(prev) !== JSON.stringify(filtered)) {
                     setCurrentIndex(0); // Reiniciar al inicio cuando cambia la cartelera activa
@@ -131,8 +131,8 @@ const VideoPlayer = ({ category }) => {
 
         const timer = setTimeout(() => {
             setCurrentIndex(prev => (prev + 1) % activePlaylist.length);
-        }, 8000); // 8 segundos por imagen
-        
+        }, 10000); // 10 segundos por imagen
+
         return () => clearTimeout(timer);
     }, [currentIndex, currentMedia, isImage, activePlaylist.length]);
 
@@ -247,9 +247,9 @@ const VideoPlayer = ({ category }) => {
             )}
 
             <div className="controls-overlay" style={{ zIndex: 1000 }}>
-                <button 
-                    className="control-btn" 
-                    onClick={() => setIsClockEnabled(!isClockEnabled)} 
+                <button
+                    className="control-btn"
+                    onClick={() => setIsClockEnabled(!isClockEnabled)}
                     title="Alternar Reloj"
                     style={{ backgroundColor: isClockEnabled ? 'rgba(255,255,255,0.3)' : 'transparent' }}
                 >
