@@ -6,11 +6,15 @@ import './UserManagementModal.css';
 const UserManagementModal = ({ onClose }) => {
     const [users, setUsers] = useState([]);
     const [categories, setCategories] = useState([]);
+    
+    // Form states
     const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [password, setPassword] = useState(''); // Opcional en edición
     const [role, setRole] = useState('editor');
     const [allowedScreens, setAllowedScreens] = useState([]);
     const [maxScreens, setMaxScreens] = useState(5);
+    
+    const [editMode, setEditMode] = useState(null); // ID del usuario en edición o null
     const [message, setMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -33,6 +37,26 @@ const UserManagementModal = ({ onClose }) => {
         }
     };
 
+    const handleEditClick = (u) => {
+        setEditMode(u.id);
+        setUsername(u.username);
+        setPassword(''); // Dejar vacío para no cambiar si no se desea
+        setRole(u.role);
+        setAllowedScreens(u.allowed_screens || []);
+        setMaxScreens(u.max_screens || 5);
+        setMessage(null);
+    };
+
+    const resetForm = () => {
+        setEditMode(null);
+        setUsername('');
+        setPassword('');
+        setRole('editor');
+        setAllowedScreens([]);
+        setMaxScreens(5);
+        setMessage(null);
+    };
+
     const handleToggleScreen = (cat) => {
         if (allowedScreens.includes(cat)) {
             setAllowedScreens(allowedScreens.filter(s => s !== cat));
@@ -41,24 +65,34 @@ const UserManagementModal = ({ onClose }) => {
         }
     };
 
-    const handleCreateUser = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         setMessage(null);
 
-        try {
-            await api.createUser({
-                username,
-                password,
-                role,
-                allowed_screens: allowedScreens,
-                max_screens: parseInt(maxScreens)
-            }, token);
+        const userData = {
+            username,
+            role,
+            allowed_screens: allowedScreens,
+            max_screens: parseInt(maxScreens)
+        };
+        if (password) userData.password = password;
 
-            setMessage({ type: 'success', text: `✅ Usuario "${username}" creado!` });
-            setUsername('');
-            setPassword('');
-            setAllowedScreens([]);
+        try {
+            if (editMode) {
+                await api.updateUser(editMode, userData, token);
+                setMessage({ type: 'success', text: `✅ Usuario "${username}" actualizado!` });
+            } else {
+                if (!password) {
+                    setMessage({ type: 'error', text: 'La contraseña es obligatoria para nuevos usuarios' });
+                    setIsLoading(false);
+                    return;
+                }
+                await api.createUser(userData, token);
+                setMessage({ type: 'success', text: `✅ Usuario "${username}" creado!` });
+            }
+            
+            resetForm();
             loadData();
         } catch (error) {
             setMessage({ type: 'error', text: `❌ Error: ${error.response?.data?.error || error.message}` });
@@ -90,31 +124,38 @@ const UserManagementModal = ({ onClose }) => {
                         <h3>Usuarios Existentes</h3>
                         <div className="users-list">
                             {users.map(u => (
-                                <div key={u.id} className="user-item">
+                                <div key={u.id} className={`user-item ${editMode === u.id ? 'editing' : ''}`}>
                                     <div className="user-info">
                                         <strong>{u.username}</strong>
-                                        <span className={`role-badge ${u.role}`}>{u.role}</span>
-                                        <small>{u.allowed_screens?.length || 0} pantallas</small>
+                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                            <span className={`role-badge ${u.role}`}>{u.role}</span>
+                                            <span className="limit-badge">L: {u.max_screens}</span>
+                                        </div>
                                     </div>
-                                    <button onClick={() => handleDeleteUser(u.id, u.username)} className="delete-user-btn">
-                                        <FaTrashAlt />
-                                    </button>
+                                    <div className="user-item-actions">
+                                        <button onClick={() => handleEditClick(u)} className="edit-user-btn" title="Editar">
+                                            ✏️
+                                        </button>
+                                        <button onClick={() => handleDeleteUser(u.id, u.username)} className="delete-user-btn" title="Eliminar">
+                                            <FaTrashAlt />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* FORMULARIO CREAR */}
+                    {/* FORMULARIO */}
                     <div className="create-section">
-                        <h3>Crear Nuevo Usuario</h3>
-                        <form onSubmit={handleCreateUser}>
+                        <h3>{editMode ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h3>
+                        <form onSubmit={handleSubmit}>
                             <div className="form-group">
                                 <label>Usuario</label>
                                 <input type="text" value={username} onChange={e => setUsername(e.target.value)} required />
                             </div>
                             <div className="form-group">
-                                <label>Contraseña</label>
-                                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                                <label>Contraseña {editMode && '(dejar en blanco para no cambiar)'}</label>
+                                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required={!editMode} />
                             </div>
                             <div className="form-group">
                                 <label>Rol</label>
@@ -146,9 +187,16 @@ const UserManagementModal = ({ onClose }) => {
 
                             {message && <div className={`message-alert ${message.type}`}>{message.text}</div>}
 
-                            <button type="submit" className="create-btn" disabled={isLoading}>
-                                {isLoading ? '...' : <><FaUserPlus /> Crear Usuario</>}
-                            </button>
+                            <div className="form-buttons">
+                                <button type="submit" className="create-btn" disabled={isLoading}>
+                                    {isLoading ? '...' : (editMode ? 'Actualizar Usuario' : <><FaUserPlus /> Crear Usuario</>)}
+                                </button>
+                                {editMode && (
+                                    <button type="button" onClick={resetForm} className="cancel-btn">
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
                         </form>
                     </div>
                 </div>

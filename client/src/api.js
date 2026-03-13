@@ -101,6 +101,13 @@ const api = {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return response.data;
+    },
+
+    updateUser: async (id, userData, token) => {
+        const response = await axios.put(`${API_URL}/users/${id}`, userData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
     }
 };
 

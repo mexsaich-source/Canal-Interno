@@ -52,11 +52,13 @@ const initDB = async () => {
                 rotation INTEGER DEFAULT 0,
                 video_url TEXT DEFAULT '',
                 media_type TEXT DEFAULT 'video',
-                public_id TEXT DEFAULT ''
+                public_id TEXT DEFAULT '',
+                created_by INTEGER
             );
             
             ALTER TABLE screens ADD COLUMN IF NOT EXISTS media_type TEXT DEFAULT 'video';
             ALTER TABLE screens ADD COLUMN IF NOT EXISTS playlist JSONB DEFAULT '[]'::jsonb;
+            ALTER TABLE screens ADD COLUMN IF NOT EXISTS created_by INTEGER;
         `);
 
         console.log('✅ TABLAS SQL VERIFICADAS');
@@ -316,17 +318,17 @@ app.post('/api/category', authenticateToken, async (req, res) => {
 
     // Verificar límite de pantallas para editores
     if (req.user.role !== 'admin') {
-        const countRes = await pool.query('SELECT count(*) FROM screens');
+        const countRes = await pool.query('SELECT count(*) FROM screens WHERE created_by = $1', [req.user.id]);
         const count = parseInt(countRes.rows[0].count);
         if (count >= req.user.max_screens) {
-            return res.status(403).json({ error: `Has alcanzado el límite de ${req.user.max_screens} pantallas permitidas.` });
+            return res.status(403).json({ error: `Has alcanzado tu límite personal de ${req.user.max_screens} pantallas permitidas.` });
         }
     }
 
     try {
         await pool.query(
-            'INSERT INTO screens (category, rotation, video_url) VALUES ($1, 0, \'\') ON CONFLICT DO NOTHING',
-            [category]
+            'INSERT INTO screens (category, rotation, video_url, created_by) VALUES ($1, 0, \'\', $2) ON CONFLICT DO NOTHING',
+            [category, req.user.id]
         );
 
         // Si es editor, le damos permiso automático a la pantalla que creó
@@ -441,6 +443,31 @@ app.delete('/api/users/:id', authenticateToken, isAdmin, async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Error eliminando usuario' });
+    }
+});
+
+app.put('/api/users/:id', authenticateToken, isAdmin, async (req, res) => {
+    const userId = req.params.id;
+    const { username, password, role, allowed_screens, max_screens } = req.body;
+    
+    try {
+        let query = 'UPDATE users SET username = $1, role = $2, allowed_screens = $3, max_screens = $4';
+        let values = [username, role, JSON.stringify(allowed_screens), max_screens];
+        
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            query += ', password = $5 WHERE id = $6';
+            values.push(hashedPassword, userId);
+        } else {
+            query += ' WHERE id = $5';
+            values.push(userId);
+        }
+        
+        await pool.query(query, values);
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error actualizando usuario' });
     }
 });
 
