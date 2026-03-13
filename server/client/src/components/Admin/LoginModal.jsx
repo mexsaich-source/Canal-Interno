@@ -14,16 +14,24 @@ const LoginModal = ({ onClose, onLogin }) => {
         setIsLoading(true);
 
         try {
+            console.log("Intentando login en:", api.API_URL); // Log para depurar en TV
             const data = await api.login(username, password);
 
-            console.log("Login exitoso:", data.username);
-            onLogin(data.token);
+            console.log("✅ Login exitoso para:", data.username);
+            onLogin(data);
 
         } catch (err) {
-            console.error("Error de conexión:", err);
-            const mensaje = err.response && err.response.data && err.response.data.error
-                ? err.response.data.error
-                : 'No se puede conectar con el servidor (¿Está iniciado?)';
+            console.error("❌ Error de login:", err);
+            let mensaje = 'Error de conexión con el servidor';
+
+            if (err.response) {
+                // El servidor respondió con un error (400, 401, etc)
+                mensaje = err.response.data && err.response.data.error ? err.response.data.error : mensaje;
+            } else if (err.request) {
+                // La petición se hizo pero no hubo respuesta (CORS o Servidor apagado)
+                mensaje = 'El servidor no responde. Verifica que la API esté encendida y acepte conexiones externas.';
+            }
+
             setError(mensaje);
         } finally {
             setIsLoading(false);

@@ -39,6 +39,29 @@
     font-size: 0.9rem;
 }
 
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.user-mgmt-btn {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: #0984e3;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.user-mgmt-btn:hover {
+    background: #74b9ff;
+    transform: scale(1.05);
+}
+
 .logout-btn {
     display: flex;
     align-items: center;

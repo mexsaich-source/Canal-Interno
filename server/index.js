@@ -34,8 +34,15 @@ const initDB = async () => {
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
+                password TEXT NOT NULL,
+                role TEXT DEFAULT 'editor',
+                allowed_screens JSONB DEFAULT '[]'::jsonb,
+                max_screens INTEGER DEFAULT 5
             );
+
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'editor';
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_screens JSONB DEFAULT '[]'::jsonb;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS max_screens INTEGER DEFAULT 5;
         `);
 
         await pool.query(`
@@ -75,11 +82,14 @@ async function crearUsuarioSiNoExiste(nombreUser, passwordUser) {
         const hashedPassword = await bcrypt.hash(passwordUser, 10);
 
         if (res.rows.length === 0) {
-            await pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', [nombreUser, hashedPassword]);
+            await pool.query(
+                'INSERT INTO users (username, password, role, allowed_screens, max_screens) VALUES ($1, $2, $3, $4, $5)', 
+                [nombreUser, hashedPassword, 'admin', '[]', 999]
+            );
             console.log(`✅ Usuario NUEVO creado: ${nombreUser}`);
         } else {
             // ACTUALIZAR SIEMPRE LA CONTRASEÑA con la del .env
-            await pool.query('UPDATE users SET password = $2 WHERE username = $1', [nombreUser, hashedPassword]);
+            await pool.query('UPDATE users SET password = $2, role = $3 WHERE username = $1', [nombreUser, hashedPassword, 'admin']);
             console.log(`ℹ️ Usuario "${nombreUser}" actualizado con la configuración del .env`);
         }
     } catch (err) {
@@ -102,15 +112,39 @@ const upload = multer({ storage: storage });
 // MIDDLEWARE DE AUTENTICACIÓN
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token) return res.status(401).json({ error: 'Acceso denegado' }); // Unauthorized
+    if (!token) return res.status(401).json({ error: 'Acceso denegado' });
 
-    jwt.verify(token, SECRET_KEY, (err, user) => {
-        if (err) return res.status(403).json({ error: 'Sesión expirada' }); // Forbidden
-        req.user = user;
-        next();
+    jwt.verify(token, SECRET_KEY, async (err, decoded) => {
+        if (err) return res.status(403).json({ error: 'Sesión expirada' });
+        
+        try {
+            const result = await pool.query('SELECT id, username, role, allowed_screens, max_screens FROM users WHERE id = $1', [decoded.id]);
+            if (result.rows.length === 0) return res.status(403).json({ error: 'Usuario no encontrado' });
+            
+            req.user = result.rows[0];
+            next();
+        } catch (error) {
+            res.status(500).json({ error: 'Error verificando usuario' });
+        }
     });
+};
+
+// MIDDLEWARE: Solo Admin
+const isAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ error: 'Requiere permisos de Administrador' });
+    }
+};
+
+// HELPER: Checar permiso sobre categoría
+const canManageCategory = (user, category) => {
+    if (user.role === 'admin') return true;
+    const allowed = user.allowed_screens || [];
+    return allowed.includes(category);
 };
 
 // HELPER: Borrar de Cloudinary
@@ -137,8 +171,14 @@ app.post('/api/auth/login', async (req, res) => {
         const validPass = await bcrypt.compare(password, user.password);
         if (!validPass) return res.status(400).json({ error: 'Contraseña incorrecta' });
 
-        const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: '1h' });
-        res.json({ token, username });
+        const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: '12h' });
+        res.json({ 
+            token, 
+            username, 
+            role: user.role, 
+            allowed_screens: user.allowed_screens,
+            max_screens: user.max_screens 
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error en el servidor al loguear' });
@@ -180,6 +220,11 @@ app.post('/api/rotation/:category', async (req, res) => {
 // PROTEGIDO: Upload
 app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), async (req, res) => {
     const { category } = req.params;
+
+    if (!canManageCategory(req.user, category)) {
+        return res.status(403).json({ error: 'No tienes permiso para subir contenido a esta pantalla' });
+    }
+
     const { hasAudio, scheduleStart, scheduleEnd, showClock } = req.body;
     try {
         if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No se subió ningún archivo' });
@@ -227,14 +272,19 @@ app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), 
 });
 
 // NUEVO: Obtener todas las categorías
-app.get('/api/categories', async (req, res) => {
+app.get('/api/categories', authenticateToken, async (req, res) => {
     try {
         const result = await pool.query('SELECT category FROM screens ORDER BY category ASC');
         const dbCategories = result.rows.map(r => r.category);
 
-        // Categorías por defecto si la base está vacía o faltan
         const defaultCategories = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes'];
-        const allCategories = [...new Set([...defaultCategories, ...dbCategories])];
+        let allCategories = [...new Set([...defaultCategories, ...dbCategories])];
+
+        // Si no es admin, filtramos solo las permitidas
+        if (req.user.role !== 'admin') {
+            const allowed = req.user.allowed_screens || [];
+            allCategories = allCategories.filter(cat => allowed.includes(cat));
+        }
 
         res.json(allCategories);
     } catch (error) {
@@ -247,11 +297,27 @@ app.post('/api/category', authenticateToken, async (req, res) => {
     const { category } = req.body;
     if (!category) return res.status(400).json({ error: 'Nombre de categoría requerido' });
 
+    // Verificar límite de pantallas para editores
+    if (req.user.role !== 'admin') {
+        const countRes = await pool.query('SELECT count(*) FROM screens');
+        const count = parseInt(countRes.rows[0].count);
+        if (count >= req.user.max_screens) {
+            return res.status(403).json({ error: `Has alcanzado el límite de ${req.user.max_screens} pantallas permitidas.` });
+        }
+    }
+
     try {
         await pool.query(
             'INSERT INTO screens (category, rotation, video_url) VALUES ($1, 0, \'\') ON CONFLICT DO NOTHING',
             [category]
         );
+
+        // Si es editor, le damos permiso automático a la pantalla que creó
+        if (req.user.role !== 'admin') {
+            const newAllowed = [...(req.user.allowed_screens || []), category];
+            await pool.query('UPDATE users SET allowed_screens = $1 WHERE id = $2', [JSON.stringify(newAllowed), req.user.id]);
+        }
+
         res.json({ success: true, category });
     } catch (error) {
         res.status(500).json({ error: 'Error creando categoría' });
@@ -261,6 +327,10 @@ app.post('/api/category', authenticateToken, async (req, res) => {
 // NUEVO: Eliminar categoría
 app.delete('/api/category/:category', authenticateToken, async (req, res) => {
     const { category } = req.params;
+
+    if (!canManageCategory(req.user, category)) {
+        return res.status(403).json({ error: 'No tienes permiso para eliminar esta pantalla' });
+    }
 
     // Protegemos las categorías por defecto
     const defaultCategories = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes'];
@@ -291,6 +361,11 @@ app.delete('/api/category/:category', authenticateToken, async (req, res) => {
 // NUEVO: Quitar solo el contenido (reset)
 app.post('/api/screen/reset/:category', authenticateToken, async (req, res) => {
     const { category } = req.params;
+
+    if (!canManageCategory(req.user, category)) {
+        return res.status(403).json({ error: 'No tienes permiso para modificar esta pantalla' });
+    }
+
     try {
         // Cleanup Cloudinary
         const prevRes = await pool.query('SELECT public_id, media_type, playlist FROM screens WHERE category = $1', [category]);
@@ -311,6 +386,44 @@ app.post('/api/screen/reset/:category', authenticateToken, async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Error al resetear contenido' });
+    }
+});
+
+// --- GESTIÓN DE USUARIOS (SOLO ADMIN) ---
+
+app.get('/api/users', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, username, role, allowed_screens, max_screens FROM users ORDER BY id ASC');
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: 'Error obteniendo usuarios' });
+    }
+});
+
+app.post('/api/users', authenticateToken, isAdmin, async (req, res) => {
+    const { username, password, role, allowed_screens, max_screens } = req.body;
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.query(
+            'INSERT INTO users (username, password, role, allowed_screens, max_screens) VALUES ($1, $2, $3, $4, $5)',
+            [username, hashedPassword, role || 'editor', JSON.stringify(allowed_screens || []), max_screens || 5]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Error creando usuario (puede que ya exista)' });
+    }
+});
+
+app.delete('/api/users/:id', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        // Impedir borrarse a sí mismo si se desea
+        if (parseInt(userId) === req.user.id) return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' });
+
+        await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Error eliminando usuario' });
     }
 });
 

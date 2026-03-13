@@ -1,0 +1,138 @@
+.user-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 40000;
+    padding: 20px;
+}
+
+.user-modal-content {
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    padding: 30px;
+    border-radius: 20px;
+    position: relative;
+    color: white;
+    overflow-y: auto;
+}
+
+.user-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .user-modal-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.users-list {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.role-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    width: fit-content;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.role-badge.admin { background: #ff4757; }
+.role-badge.editor { background: #2f3542; }
+
+.delete-user-btn {
+    background: rgba(255, 71, 87, 0.2);
+    color: #ff4757;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.delete-user-btn:hover {
+    background: #ff4757;
+    color: white;
+}
+
+.screens-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.screen-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.screen-opt:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.screen-opt .checked {
+    color: var(--accent-color);
+}
+
+.create-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    background: var(--accent-color);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.create-btn:hover {
+    background: #ff7f50;
+    transform: translateY(-2px);
+}

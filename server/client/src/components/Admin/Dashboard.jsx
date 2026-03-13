@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { FaTrashAlt, FaTimes, FaPlus, FaCloudUploadAlt, FaSignOutAlt, FaTv } from 'react-icons/fa';
 import api from '../../api';
 import UploadModal from './UploadModal';
+import UserManagementModal from './UserManagementModal';
 import './Dashboard.css';
 
-const Dashboard = ({ onLogout }) => {
+const Dashboard = ({ user, onLogout }) => {
     const [categories, setCategories] = useState([]);
     const [uploading, setUploading] = useState(null);
     const [message, setMessage] = useState(null);
+    const [showUserModal, setShowUserModal] = useState(false);
 
     // Estado para nueva categoría
     const [newCategory, setNewCategory] = useState('');
@@ -23,7 +25,8 @@ const Dashboard = ({ onLogout }) => {
 
     const loadCategories = async () => {
         try {
-            const data = await api.getCategories();
+            const token = localStorage.getItem('token');
+            const data = await api.getCategories(token);
             setCategories(data);
         } catch (error) {
             console.error("Error cargando categorías:", error);
@@ -105,11 +108,18 @@ const Dashboard = ({ onLogout }) => {
             <header className="dashboard-header glass">
                 <div className="header-info">
                     <h1><FaTv style={{ marginRight: '10px', color: 'var(--accent-color)' }} /> Panel de Gestión</h1>
-                    <p>Administra el contenido de cada pantalla</p>
+                    <p>Bienvenido, <strong>{user?.username}</strong> ({user?.role})</p>
                 </div>
-                <button onClick={onLogout} className="logout-btn">
-                    <FaSignOutAlt style={{ marginRight: '8px' }} /> Salir
-                </button>
+                <div className="header-buttons">
+                    {user?.role === 'admin' && (
+                        <button onClick={() => setShowUserModal(true)} className="user-mgmt-btn">
+                            <FaUserShield style={{ marginRight: '8px' }} /> Usuarios
+                        </button>
+                    )}
+                    <button onClick={onLogout} className="logout-btn">
+                        <FaSignOutAlt style={{ marginRight: '8px' }} /> Salir
+                    </button>
+                </div>
             </header>
 
             <div className="dashboard-content">
@@ -156,24 +166,31 @@ const Dashboard = ({ onLogout }) => {
                         </div>
                     ))}
 
-                    {/* TARJETA PARA AGREGAR NUEVA */}
-                    <div className="card add-card">
-                        <div className="card-icon"><FaPlus /></div>
-                        <h3>Nueva Pantalla</h3>
-                        <form onSubmit={handleCreateCategory} className="add-screen-form">
-                            <input
-                                type="text"
-                                placeholder="..."
-                                value={newCategory}
-                                onChange={(e) => setNewCategory(e.target.value)}
-                            />
-                            <button type="submit" disabled={isCreating || !newCategory}>
-                                {isCreating ? '...' : <FaPlus />}
-                            </button>
-                        </form>
-                    </div>
+                    {/* TARJETA PARA AGREGAR NUEVA - Solo si es admin o no ha llegado a su límite */}
+                    {(user?.role === 'admin' || categories.length < user?.max_screens) && (
+                        <div className="card add-card">
+                            <div className="card-icon"><FaPlus /></div>
+                            <h3>Nueva Pantalla</h3>
+                            <form onSubmit={handleCreateCategory} className="add-screen-form">
+                                <input
+                                    type="text"
+                                    placeholder="..."
+                                    value={newCategory}
+                                    onChange={(e) => setNewCategory(e.target.value)}
+                                />
+                                <button type="submit" disabled={isCreating || !newCategory}>
+                                    {isCreating ? '...' : <FaPlus />}
+                                </button>
+                            </form>
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* MODAL DE GESTIÓN DE USUARIOS */}
+            {showUserModal && (
+                <UserManagementModal onClose={() => setShowUserModal(false)} />
+            )}
 
             {/* MODAL DE SUBIDA AVANZADA */}
             {uploadModalCategory && (

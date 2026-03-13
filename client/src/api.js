@@ -52,8 +52,10 @@ const api = {
     },
 
     // 5. OBTENER CATEGORÍAS
-    getCategories: async () => {
-        const response = await axios.get(`${API_URL}/categories`);
+    getCategories: async (token) => {
+        const response = await axios.get(`${API_URL}/categories`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         return response.data;
     },
 
@@ -73,9 +75,30 @@ const api = {
         return response.data;
     },
 
-    // 8. QUITAR CONTENIDO (RESET)
     resetScreenContent: async (category, token) => {
         const response = await axios.post(`${API_URL}/screen/reset/${category}`, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // 9. GESTIÓN DE USUARIOS
+    getUsers: async (token) => {
+        const response = await axios.get(`${API_URL}/users`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    createUser: async (userData, token) => {
+        const response = await axios.post(`${API_URL}/users`, userData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    deleteUser: async (id, token) => {
+        const response = await axios.delete(`${API_URL}/users/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return response.data;

@@ -1,12 +1,17 @@
+/* src/components/Dashboard.css */
+
 .dashboard-container {
-    min-height: 100vh;
+    /* --- CORRECCIÓN DEL SCROLL --- */
+    height: 100vh;           /* Importante: Altura fija igual a la pantalla */
+    overflow-y: auto;        /* Importante: Activa el scroll vertical en este contenedor */
+    padding-bottom: 100px;   /* Espacio extra abajo para que no se corte la última fila */
+    /* ----------------------------- */
+
     width: 100%;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     padding: 30px;
-    padding-left: 100px;
-    /* Espacio para sidebar */
+    padding-left: 100px; /* Espacio para sidebar */
     box-sizing: border-box;
-    overflow-y: auto;
     font-family: 'Inter', sans-serif;
 }
 
@@ -32,6 +37,29 @@
     margin: 5px 0 0 0;
     color: #636e72;
     font-size: 0.9rem;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.user-mgmt-btn {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: #0984e3;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.user-mgmt-btn:hover {
+    background: #74b9ff;
+    transform: scale(1.05);
 }
 
 .logout-btn {
@@ -76,7 +104,7 @@
 
 .card-icon {
     font-size: 2.5rem;
-    color: var(--accent-color);
+    color: #0984e3; /* Color azul por defecto si no tienes la variable accent-color */
     margin-bottom: 15px;
     opacity: 0.8;
 }
@@ -217,3 +245,4 @@
     background: #ff7675;
     color: white;
 }
+

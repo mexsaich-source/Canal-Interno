@@ -18,7 +18,7 @@ const LoginModal = ({ onClose, onLogin }) => {
             const data = await api.login(username, password);
 
             console.log("✅ Login exitoso para:", data.username);
-            onLogin(data.token);
+            onLogin(data);
 
         } catch (err) {
             console.error("❌ Error de login:", err);

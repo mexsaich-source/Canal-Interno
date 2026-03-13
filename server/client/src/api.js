@@ -1,9 +1,21 @@
 import axios from 'axios';
 
-// Usamos variable de entorno o fallback a localhost
-const API_URL = (import.meta.env.VITE_API_URL) ? import.meta.env.VITE_API_URL : 'http://localhost:5000/api';
+// Prioridad: 1. Variable de entorno, 2. URL de Vercel (si se detecta), 3. IP local de respaldo
+const getApiUrl = () => {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+
+    // Si estamos en Vercel pero falta la variable, intentamos deducirla o avisar
+    if (window.location.hostname.includes('vercel.app')) {
+        console.warn('VITE_API_URL no configurada en Vercel. Peticiones fallarán si el backend no es el mismo host.');
+    }
+
+    return 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
 
 const api = {
+    API_URL, // Exponer para depuración
     // 1. OBTENER PANTALLA (Corregido de /videos a /screen)
     getScreen: async (category) => {
         try {
@@ -40,8 +52,10 @@ const api = {
     },
 
     // 5. OBTENER CATEGORÍAS
-    getCategories: async () => {
-        const response = await axios.get(`${API_URL}/categories`);
+    getCategories: async (token) => {
+        const response = await axios.get(`${API_URL}/categories`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         return response.data;
     },
 
@@ -61,9 +75,30 @@ const api = {
         return response.data;
     },
 
-    // 8. QUITAR CONTENIDO (RESET)
     resetScreenContent: async (category, token) => {
         const response = await axios.post(`${API_URL}/screen/reset/${category}`, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // 9. GESTIÓN DE USUARIOS
+    getUsers: async (token) => {
+        const response = await axios.get(`${API_URL}/users`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    createUser: async (userData, token) => {
+        const response = await axios.post(`${API_URL}/users`, userData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    deleteUser: async (id, token) => {
+        const response = await axios.delete(`${API_URL}/users/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return response.data;

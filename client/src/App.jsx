@@ -17,7 +17,8 @@ const ScreenWrapper = () => {
 const InnerApp = () => {
   // --- ESTADOS ---
   const [showLogin, setShowLogin] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(!!localStorage.getItem('token'));
+  const [user, setUser] = useState(localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null);
+  const isAdmin = !!localStorage.getItem('token');
   const [showSidebar, setShowSidebar] = useState(false);
 
   const navigate = useNavigate();
@@ -61,9 +62,10 @@ const InnerApp = () => {
   // Ahora manejamos el acceso solo mediante la protección de rutas en el render.
 
   // --- HANDLERS ---
-  const handleLoginSuccess = (token) => {
-    localStorage.setItem('token', token);
-    setIsAdmin(true);
+  const handleLoginSuccess = (userData) => {
+    localStorage.setItem('token', userData.token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
     setShowLogin(false);
     setShowSidebar(true);
     navigate('/admin');
@@ -71,7 +73,8 @@ const InnerApp = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    setIsAdmin(false);
+    localStorage.removeItem('user');
+    setUser(null);
     navigate('/inicio');
   }
 
@@ -135,7 +138,7 @@ const InnerApp = () => {
 
           <Route
             path="/admin"
-            element={isAdmin ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/inicio" />}
+            element={user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/inicio" />}
           />
         </Routes>
       </div>
