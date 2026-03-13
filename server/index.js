@@ -272,7 +272,20 @@ app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), 
 });
 
 // NUEVO: Obtener todas las categorías
-app.get('/api/categories', authenticateToken, async (req, res) => {
+app.get('/api/categories', async (req, res) => {
+    // Intentar sacar el token si existe (pero no es obligatorio aquí)
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let user = null;
+
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, SECRET_KEY);
+            const result = await pool.query('SELECT id, role, allowed_screens FROM users WHERE id = $1', [decoded.id]);
+            user = result.rows[0];
+        } catch (e) { /* Token inválido o expirado, tratar como público */ }
+    }
+
     try {
         const result = await pool.query('SELECT category FROM screens ORDER BY category ASC');
         const dbCategories = result.rows.map(r => r.category);
@@ -280,9 +293,13 @@ app.get('/api/categories', authenticateToken, async (req, res) => {
         const defaultCategories = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes'];
         let allCategories = [...new Set([...defaultCategories, ...dbCategories])];
 
-        // Si no es admin, filtramos solo las permitidas
-        if (req.user.role !== 'admin') {
-            const allowed = req.user.allowed_screens || [];
+        // Lógica de filtrado:
+        // 1. Si NO hay usuario (público), mostrar TODO (porque las TVs deben verlo todo)
+        // 2. Si HAY usuario EDITOR, filtrar por sus permitidas
+        // 3. Si HAY usuario ADMIN, mostrar TODO
+        
+        if (user && user.role === 'editor') {
+            const allowed = user.allowed_screens || [];
             allCategories = allCategories.filter(cat => allowed.includes(cat));
         }
 

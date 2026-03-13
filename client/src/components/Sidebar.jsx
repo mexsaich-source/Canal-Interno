@@ -10,7 +10,8 @@ const Sidebar = ({ onAdminClick }) => {
 
     const load = async () => {
         try {
-            const data = await api.getCategories();
+            const token = localStorage.getItem('token');
+            const data = await api.getCategories(token);
             setCategories(data);
         } catch (err) {
             console.error("Error sidebar cats:", err);

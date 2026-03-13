@@ -53,9 +53,8 @@ const api = {
 
     // 5. OBTENER CATEGORÍAS
     getCategories: async (token) => {
-        const response = await axios.get(`${API_URL}/categories`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const response = await axios.get(`${API_URL}/categories`, { headers });
         return response.data;
     },
 
