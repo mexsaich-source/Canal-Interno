@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTrashAlt, FaTimes, FaPlus, FaCloudUploadAlt, FaSignOutAlt, FaTv, FaUserShield } from 'react-icons/fa';
+import { FaTrashAlt, FaTimes, FaPlus, FaCloudUploadAlt, FaSignOutAlt, FaTv, FaLock } from 'react-icons/fa';
 import api from '../../api';
 import UploadModal from './UploadModal';
 import UserManagementModal from './UserManagementModal';
@@ -113,7 +113,7 @@ const Dashboard = ({ user, onLogout }) => {
                 <div className="header-buttons">
                     {user?.role === 'admin' && (
                         <button onClick={() => setShowUserModal(true)} className="user-mgmt-btn">
-                            <FaUserShield style={{ marginRight: '8px' }} /> Usuarios
+                            <FaLock style={{ marginRight: '8px' }} /> Usuarios
                         </button>
                     )}
                     <button onClick={onLogout} className="logout-btn">

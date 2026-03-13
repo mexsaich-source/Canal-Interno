@@ -17,7 +17,15 @@ const ScreenWrapper = () => {
 const InnerApp = () => {
   // --- ESTADOS ---
   const [showLogin, setShowLogin] = useState(false);
-  const [user, setUser] = useState(localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error("Error parsing user from localStorage:", e);
+      return null;
+    }
+  });
   const isAdmin = !!localStorage.getItem('token');
   const [showSidebar, setShowSidebar] = useState(false);
 
@@ -140,6 +148,8 @@ const InnerApp = () => {
             path="/admin"
             element={user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/inicio" />}
           />
+          {/* Redirección por si el usuario escribe /dashboard por error */}
+          <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
         </Routes>
       </div>
 

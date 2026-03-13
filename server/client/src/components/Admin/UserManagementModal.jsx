@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTrashAlt, FaTimes, FaUserPlus, FaUserShield, FaCheckSquare, FaSquare } from 'react-icons/fa';
+import { FaTrashAlt, FaTimes, FaUserPlus, FaLock, FaCheckSquare, FaSquare } from 'react-icons/fa';
 import api from '../../api';
 import './UserManagementModal.css';
 
@@ -116,7 +116,7 @@ const UserManagementModal = ({ onClose }) => {
         <div className="user-modal-overlay">
             <div className="user-modal-content glass">
                 <button className="close-btn" onClick={onClose}><FaTimes /></button>
-                <h2><FaUserShield /> Gestión de Usuarios</h2>
+                <h2><FaLock /> Gestión de Usuarios</h2>
 
                 <div className="user-modal-grid">
                     {/* LISTA DE USUARIOS */}
