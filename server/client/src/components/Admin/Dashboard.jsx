@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTrashAlt, FaTimes, FaPlus, FaCloudUploadAlt, FaSignOutAlt, FaTv } from 'react-icons/fa';
+import { FaTrashAlt, FaTimes, FaPlus, FaCloudUploadAlt, FaSignOutAlt, FaTv, FaUserShield } from 'react-icons/fa';
 import api from '../../api';
 import UploadModal from './UploadModal';
 import UserManagementModal from './UserManagementModal';
