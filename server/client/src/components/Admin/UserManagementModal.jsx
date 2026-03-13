@@ -6,14 +6,14 @@ import './UserManagementModal.css';
 const UserManagementModal = ({ onClose }) => {
     const [users, setUsers] = useState([]);
     const [categories, setCategories] = useState([]);
-    
+
     // Form states
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState(''); // Opcional en edición
     const [role, setRole] = useState('editor');
     const [allowedScreens, setAllowedScreens] = useState([]);
     const [maxScreens, setMaxScreens] = useState(5);
-    
+
     const [editMode, setEditMode] = useState(null); // ID del usuario en edición o null
     const [message, setMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -91,7 +91,7 @@ const UserManagementModal = ({ onClose }) => {
                 await api.createUser(userData, token);
                 setMessage({ type: 'success', text: `✅ Usuario "${username}" creado!` });
             }
-            
+
             resetForm();
             loadData();
         } catch (error) {
@@ -164,12 +164,12 @@ const UserManagementModal = ({ onClose }) => {
                                     <option value="admin">Administrador (Total)</option>
                                 </select>
                             </div>
-                            
+
                             {role === 'editor' && (
                                 <>
                                     <div className="form-group">
                                         <label>Límite de Pantallas que puede CREAR</label>
-                                        <input type="number" value={maxScreens} onChange={e => setMaxScreens(e.target.value)} min="1" />
+                                        <input type="number" value={maxScreens} onChange={e => setMaxScreens(e.target.value)} min="0" />
                                     </div>
                                     <div className="form-group">
                                         <label>Permitir gestionar estas pantallas:</label>

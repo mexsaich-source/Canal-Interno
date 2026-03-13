@@ -43,7 +43,7 @@ const UserManagementModal = ({ onClose }) => {
         setPassword(''); // Dejar vacío para no cambiar si no se desea
         setRole(u.role);
         setAllowedScreens(u.allowed_screens || []);
-        setMaxScreens('');
+        setMaxScreens(u.max_screens || 5);
         setMessage(null);
     };
 
@@ -169,7 +169,7 @@ const UserManagementModal = ({ onClose }) => {
                                 <>
                                     <div className="form-group">
                                         <label>Límite de Pantallas que puede CREAR</label>
-                                        <input type="number" value={maxScreens} onChange={e => setMaxScreens(e.target.value)} min="1" />
+                                        <input type="number" value={maxScreens} onChange={e => setMaxScreens(e.target.value)} min="0" />
                                     </div>
                                     <div className="form-group">
                                         <label>Permitir gestionar estas pantallas:</label>
