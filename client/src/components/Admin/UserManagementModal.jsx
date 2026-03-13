@@ -6,14 +6,14 @@ import './UserManagementModal.css';
 const UserManagementModal = ({ onClose }) => {
     const [users, setUsers] = useState([]);
     const [categories, setCategories] = useState([]);
-    
+
     // Form states
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState(''); // Opcional en edición
     const [role, setRole] = useState('editor');
     const [allowedScreens, setAllowedScreens] = useState([]);
     const [maxScreens, setMaxScreens] = useState(5);
-    
+
     const [editMode, setEditMode] = useState(null); // ID del usuario en edición o null
     const [message, setMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +43,7 @@ const UserManagementModal = ({ onClose }) => {
         setPassword(''); // Dejar vacío para no cambiar si no se desea
         setRole(u.role);
         setAllowedScreens(u.allowed_screens || []);
-        setMaxScreens(u.max_screens || 5);
+        setMaxScreens('');
         setMessage(null);
     };
 
@@ -91,7 +91,7 @@ const UserManagementModal = ({ onClose }) => {
                 await api.createUser(userData, token);
                 setMessage({ type: 'success', text: `✅ Usuario "${username}" creado!` });
             }
-            
+
             resetForm();
             loadData();
         } catch (error) {
@@ -164,7 +164,7 @@ const UserManagementModal = ({ onClose }) => {
                                     <option value="admin">Administrador (Total)</option>
                                 </select>
                             </div>
-                            
+
                             {role === 'editor' && (
                                 <>
                                     <div className="form-group">
