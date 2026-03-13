@@ -50,15 +50,16 @@ const Sidebar = ({ onAdminClick }) => {
             </div>
 
             <nav className="nav-menu">
-                {categories.map((cat) => {
-                    const { path, icon } = getMenuInfo(cat);
+                {categories.map((item) => {
+                    const catName = typeof item === 'string' ? item : item.category;
+                    const { path, icon } = getMenuInfo(catName);
                     return (
                         <NavLink
-                            key={cat}
+                            key={catName}
                             to={path}
                             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                             <span className="icon">{icon}</span>
-                            <span className="label">{cat}</span>
+                            <span className="label">{catName}</span>
                         </NavLink>
                     );
                 })}

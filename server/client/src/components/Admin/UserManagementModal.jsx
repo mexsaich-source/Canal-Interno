@@ -174,12 +174,15 @@ const UserManagementModal = ({ onClose }) => {
                                     <div className="form-group">
                                         <label>Permitir gestionar estas pantallas:</label>
                                         <div className="screens-selector">
-                                            {categories.map(cat => (
-                                                <div key={cat} className="screen-opt" onClick={() => handleToggleScreen(cat)}>
-                                                    {allowedScreens.includes(cat) ? <FaCheckSquare className="checked" /> : <FaSquare />}
-                                                    <span>{cat}</span>
-                                                </div>
-                                            ))}
+                                            {categories.map(item => {
+                                                const catName = typeof item === 'string' ? item : item.category;
+                                                return (
+                                                    <div key={catName} className="screen-opt" onClick={() => handleToggleScreen(catName)}>
+                                                        {allowedScreens.includes(catName) ? <FaCheckSquare className="checked" /> : <FaSquare />}
+                                                        <span>{catName}</span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </>
