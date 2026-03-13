@@ -4,13 +4,19 @@ import './UploadModal.css';
 
 const UploadModal = ({ category, onClose, onUpload }) => {
     const [files, setFiles] = useState([]);
+    const [previews, setPreviews] = useState([]); // [url, url...]
     const [hasAudio, setHasAudio] = useState(false);
     const [scheduleStart, setScheduleStart] = useState('');
     const [scheduleEnd, setScheduleEnd] = useState('');
     const [isUploading, setIsUploading] = useState(false);
 
     const handleFileChange = (e) => {
-        setFiles(Array.from(e.target.files));
+        const selectedFiles = Array.from(e.target.files);
+        setFiles(selectedFiles);
+
+        // Generar URLs de previsualización locales
+        const previewUrls = selectedFiles.map(file => URL.createObjectURL(file));
+        setPreviews(previewUrls);
     };
 
     const hasVideo = files.some(file => file.type.startsWith('video/'));
@@ -53,6 +59,20 @@ const UploadModal = ({ category, onClose, onUpload }) => {
                             required 
                         />
                         <small style={{display: 'block', marginTop: '5px', color: '#ccc'}}>Puedes subir múltiples fotos (presentación) o 1 video.</small>
+                        
+                        {previews.length > 0 && (
+                            <div className="upload-previews-container">
+                                {previews.map((url, index) => (
+                                    <div key={index} className="preview-thumbnail">
+                                        {files[index].type.startsWith('video/') ? (
+                                            <video src={url} muted />
+                                        ) : (
+                                            <img src={url} alt="preview" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {hasVideo && (

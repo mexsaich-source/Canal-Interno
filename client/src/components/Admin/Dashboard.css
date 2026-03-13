@@ -104,9 +104,33 @@
 
 .card-icon {
     font-size: 2.5rem;
-    color: #0984e3; /* Color azul por defecto si no tienes la variable accent-color */
-    margin-bottom: 15px;
+    color: #0984e3;
+    margin-bottom: 0;
     opacity: 0.8;
+}
+
+.card-media-preview {
+    width: 100%;
+    height: 140px;
+    background: #dfe6e9;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card-media-preview img, .card-media-preview video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.card-media-preview:hover img, .card-media-preview:hover video {
+    transform: scale(1.1);
 }
 
 .card h3 {

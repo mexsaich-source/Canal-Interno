@@ -130,44 +130,64 @@ const Dashboard = ({ user, onLogout }) => {
                 )}
 
                 <div className="grid-layout">
-                    {categories.map(cat => (
-                        <div key={cat} className="card premium-card">
-                            {/* Botón X para borrar CATEGORIA (SÓLO SI NO ES PROTEGIDA) */}
-                            {!isProtected(cat) && (
-                                <button
-                                    className="screen-delete-btn"
-                                    onClick={() => handleDeleteCategory(cat)}
-                                    title="Eliminar Pantalla del Canal"
-                                >
-                                    <FaTimes />
-                                </button>
-                            )}
+                    {categories.map(screen => {
+                        const cat = screen.category;
+                        // Obtener miniatura: primero de la playlist, o video_url principal
+                        let previewUrl = screen.video_url;
+                        if (screen.playlist && screen.playlist.length > 0) {
+                            previewUrl = screen.playlist[0].url;
+                        }
+                        const isImage = (screen.playlist?.[0]?.type === 'image') || (screen.media_type === 'image');
 
-                            <div className="card-icon"><FaTv /></div>
-                            <h3>{cat}</h3>
+                        return (
+                            <div key={cat} className="card premium-card">
+                                {/* Botón X para borrar CATEGORIA (SÓLO ADMIN y NO PROTEGIDA) */}
+                                {user?.role === 'admin' && !isProtected(cat) && (
+                                    <button
+                                        className="screen-delete-btn"
+                                        onClick={() => handleDeleteCategory(cat)}
+                                        title="Eliminar Pantalla del Canal"
+                                    >
+                                        <FaTimes />
+                                    </button>
+                                )}
 
-                            <div className="card-actions">
-                                <button
-                                    className="action-btn upload-action"
-                                    onClick={() => setUploadModalCategory(cat)}
-                                    disabled={uploading === cat}
-                                >
-                                    {uploading === cat ? <>⏳...</> : <><FaCloudUploadAlt /> Subir</>}
-                                </button>
+                                <div className="card-media-preview">
+                                    {previewUrl ? (
+                                        isImage ? (
+                                            <img src={previewUrl.replace('/upload/', '/upload/w_300,c_scale/')} alt={cat} />
+                                        ) : (
+                                            <video src={previewUrl} muted />
+                                        )
+                                    ) : (
+                                        <div className="card-icon"><FaTv /></div>
+                                    )}
+                                </div>
+                                <h3>{cat}</h3>
 
-                                <button
-                                    className="action-btn reset-action"
-                                    onClick={() => handleResetContent(cat)}
-                                    title="Quitar video/imagen actual"
-                                >
-                                    <FaTrashAlt /> Quitar
-                                </button>
+                                <div className="card-actions">
+                                    <button
+                                        className="action-btn upload-action"
+                                        onClick={() => setUploadModalCategory(cat)}
+                                        disabled={uploading === cat}
+                                    >
+                                        {uploading === cat ? <>⏳...</> : <><FaCloudUploadAlt /> Subir</>}
+                                    </button>
+
+                                    <button
+                                        className="action-btn reset-action"
+                                        onClick={() => handleResetContent(cat)}
+                                        title="Quitar video/imagen actual"
+                                    >
+                                        <FaTrashAlt /> Quitar
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
-                    {/* TARJETA PARA AGREGAR NUEVA - Solo si es admin o no ha llegado a su límite */}
-                    {(user?.role === 'admin' || categories.length < user?.max_screens) && (
+                    {/* TARJETA PARA AGREGAR NUEVA - Solo si es admin o no ha llegado a su límite personal */}
+                    {(user?.role === 'admin' || categories.filter(s => s.created_by === user?.id).length < user?.max_screens) && (
                         <div className="card add-card">
                             <div className="card-icon"><FaPlus /></div>
                             <h3>Nueva Pantalla</h3>
