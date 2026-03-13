@@ -79,7 +79,7 @@ const InnerApp = () => {
   }
 
   const handleAdminClick = () => {
-    if (isAdmin) {
+    if (user) {
       navigate('/admin');
     } else {
       setShowLogin(true);
