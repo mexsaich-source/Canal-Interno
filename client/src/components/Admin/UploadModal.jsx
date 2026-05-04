@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
 import './UploadModal.css';
 
-const UploadModal = ({ category, onClose, onUpload }) => {
+const UploadModal = ({ category, existingPlaylist = [], onClose, onUpload }) => {
     const [files, setFiles] = useState([]);
     const [previews, setPreviews] = useState([]); // [url, url...]
     const [hasAudio, setHasAudio] = useState(false);
@@ -21,6 +21,23 @@ const UploadModal = ({ category, onClose, onUpload }) => {
     };
 
     const hasVideo = files.some(file => file.type.startsWith('video/'));
+
+    const handleQueueAfterLast = () => {
+        if (existingPlaylist && existingPlaylist.length > 0) {
+            const ends = existingPlaylist.map(p => p.scheduleEnd).filter(Boolean).map(d => new Date(d).getTime());
+            if (ends.length > 0) {
+                const maxEnd = new Date(Math.max(...ends));
+                const tzoffset = maxEnd.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(maxEnd - tzoffset)).toISOString().slice(0, 16);
+                setScheduleStart(localISOTime);
+                setAppend(true);
+            } else {
+                alert("La programación actual no tiene fechas de fin establecidas (se reproducen infinitamente).");
+            }
+        } else {
+            alert("No hay elementos programados previamente en esta pantalla.");
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -102,8 +119,13 @@ const UploadModal = ({ category, onClose, onUpload }) => {
                         </label>
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group" style={{ position: 'relative' }}>
                         <label>🕒 Programar Inicio (Opcional)</label>
+                        <button type="button" onClick={handleQueueAfterLast} style={{
+                            position: 'absolute', top: 0, right: 0, padding: '2px 8px', fontSize: '0.8rem', background: '#0984e3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer'
+                        }}>
+                            Poner después del último evento
+                        </button>
                         <input 
                             type="datetime-local" 
                             value={scheduleStart} 

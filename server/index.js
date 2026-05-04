@@ -343,7 +343,7 @@ app.get('/api/categories', async (req, res) => {
         const result = await pool.query('SELECT category, video_url, media_type, playlist, created_by FROM screens ORDER BY category ASC');
         const dbScreens = result.rows;
 
-        const defaultNames = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes', '__DEFAULT_IMAGE__'];
+        const defaultNames = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes', '__DEFAULT_IMAGE__', '__GLOBAL_SETTINGS__'];
         
         // Mezclamos con categorías por defecto si no están en DB
         let allScreens = [...dbScreens];
@@ -413,7 +413,7 @@ app.delete('/api/category/:category', authenticateToken, isAdmin, async (req, re
     }
 
     // Protegemos las categorías por defecto
-    const defaultCategories = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes', '__DEFAULT_IMAGE__'];
+    const defaultCategories = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes', '__DEFAULT_IMAGE__', '__GLOBAL_SETTINGS__'];
     if (defaultCategories.includes(category)) {
         return res.status(403).json({ error: 'No se pueden eliminar categorías básicas ni reservadas' });
     }
@@ -466,6 +466,36 @@ app.post('/api/screen/reset/:category', authenticateToken, async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Error al resetear contenido' });
+    }
+});
+
+// --- CONFIGURACIÓN GLOBAL DE TEXTOS ---
+
+app.get('/api/settings/welcome', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT playlist FROM screens WHERE category = $1', ['__GLOBAL_SETTINGS__']);
+        if (result.rows.length > 0 && result.rows[0].playlist && result.rows[0].playlist.length > 0) {
+            res.json(result.rows[0].playlist[0]);
+        } else {
+            res.json({ title: 'HILTON', subtitle: 'México City Santa Fe' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Error obteniendo configuración' });
+    }
+});
+
+app.post('/api/settings/welcome', authenticateToken, isAdmin, async (req, res) => {
+    const { title, subtitle } = req.body;
+    try {
+        const settings = [{ title: title || 'HILTON', subtitle: subtitle || 'México City Santa Fe' }];
+        const query = `
+            INSERT INTO screens (category, playlist) VALUES ($1, $2)
+            ON CONFLICT (category) DO UPDATE SET playlist = $2;
+        `;
+        await pool.query(query, ['__GLOBAL_SETTINGS__', JSON.stringify(settings)]);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Error guardando configuración' });
     }
 });
 

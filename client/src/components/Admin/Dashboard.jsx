@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaTrashAlt, FaTimes, FaPlus, FaCloudUploadAlt, FaSignOutAlt, FaTv, FaLock } from 'react-icons/fa';
+import { FaTrashAlt, FaTimes, FaPlus, FaCloudUploadAlt, FaSignOutAlt, FaTv, FaLock, FaFont } from 'react-icons/fa';
 import api from '../../api';
 import UploadModal from './UploadModal';
 import UserManagementModal from './UserManagementModal';
@@ -114,8 +114,24 @@ const Dashboard = ({ user, onLogout }) => {
         }
     };
 
+    const handleEditTexts = async () => {
+        try {
+            const current = await api.getWelcomeSettings();
+            const newTitle = window.prompt("Título de Bienvenida (Ej. HILTON):", current.title);
+            if (newTitle === null) return;
+            const newSubtitle = window.prompt("Subtítulo (Ej. México City Santa Fe):", current.subtitle);
+            if (newSubtitle === null) return;
+
+            const token = localStorage.getItem('token');
+            await api.updateWelcomeSettings({ title: newTitle, subtitle: newSubtitle }, token);
+            setMessage({ type: 'success', text: '✅ Textos de bienvenida actualizados correctamente.' });
+        } catch (error) {
+            setMessage({ type: 'error', text: `❌ Error actualizando textos: ${error.message}` });
+        }
+    };
+
     const isProtected = (cat) => {
-        return ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes'].includes(cat);
+        return ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes', '__DEFAULT_IMAGE__', '__GLOBAL_SETTINGS__'].includes(cat);
     };
 
     return (
@@ -127,9 +143,14 @@ const Dashboard = ({ user, onLogout }) => {
                 </div>
                 <div className="header-buttons">
                     {user?.role === 'admin' && (
-                        <button onClick={() => setShowUserModal(true)} className="user-mgmt-btn">
-                            <FaLock style={{ marginRight: '8px' }} /> Usuarios
-                        </button>
+                        <>
+                            <button onClick={handleEditTexts} className="user-mgmt-btn" style={{ background: '#6c5ce7' }} title="Editar textos por defecto">
+                                <FaFont style={{ marginRight: '8px' }} /> Textos
+                            </button>
+                            <button onClick={() => setShowUserModal(true)} className="user-mgmt-btn">
+                                <FaLock style={{ marginRight: '8px' }} /> Usuarios
+                            </button>
+                        </>
                     )}
                     <button onClick={onLogout} className="logout-btn">
                         <FaSignOutAlt style={{ marginRight: '8px' }} /> Salir
@@ -147,6 +168,8 @@ const Dashboard = ({ user, onLogout }) => {
                 <div className="grid-layout">
                     {categories.map(screen => {
                         const cat = screen.category;
+                        if (cat === '__GLOBAL_SETTINGS__') return null; // Ocultamos la categoría técnica de la cuadrícula
+                        
                         // Obtener miniatura: primero de la playlist, o video_url principal
                         let previewUrl = screen.video_url;
                         if (screen.playlist && screen.playlist.length > 0) {
@@ -249,6 +272,7 @@ const Dashboard = ({ user, onLogout }) => {
             {uploadModalCategory && (
                 <UploadModal
                     category={uploadModalCategory}
+                    existingPlaylist={categories.find(c => c.category === uploadModalCategory)?.playlist || []}
                     onClose={() => setUploadModalCategory(null)}
                     onUpload={handleUploadSubmit}
                 />

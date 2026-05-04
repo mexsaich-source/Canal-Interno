@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './WelcomeScreen.css';
 
-const WelcomeScreen = ({ onFinish, persistent = false, showClock = false, defaultImageUrl = null }) => {
+const WelcomeScreen = ({ onFinish, persistent = false, showClock = false, defaultImageUrl = null, title = 'HILTON', subtitle = 'México City Santa Fe' }) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -30,8 +30,8 @@ const WelcomeScreen = ({ onFinish, persistent = false, showClock = false, defaul
     <div className={`welcome-overlay ${persistent ? 'placeholder' : ''}`} style={backgroundStyle}>
       {!defaultImageUrl && (
           <>
-              <h1 className="welcome-title">HILTON</h1>
-              <p className="welcome-subtitle">México City Santa Fe</p>
+              <h1 className="welcome-title">{title}</h1>
+              <p className="welcome-subtitle">{subtitle}</p>
               <div className="welcome-line"></div>
           </>
       )}

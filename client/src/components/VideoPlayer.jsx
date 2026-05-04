@@ -44,6 +44,20 @@ const VideoPlayer = ({ category }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isClockEnabled, setIsClockEnabled] = useState(false);
     const [defaultImageUrl, setDefaultImageUrl] = useState(null);
+    const [welcomeText, setWelcomeText] = useState({ title: 'HILTON', subtitle: 'México City Santa Fe' });
+
+    // --- OBTENER TEXTOS DE BIENVENIDA ---
+    useEffect(() => {
+        const fetchWelcomeText = async () => {
+            if (api.getWelcomeSettings) {
+                const settings = await api.getWelcomeSettings();
+                if (settings) setWelcomeText(settings);
+            }
+        };
+        fetchWelcomeText();
+        const interval = setInterval(fetchWelcomeText, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     // --- OBTENER IMAGEN POR DEFECTO ---
     useEffect(() => {
@@ -259,7 +273,13 @@ const VideoPlayer = ({ category }) => {
                     )}
                 </div>
             ) : (
-                <WelcomeScreen persistent={true} showClock={isClockEnabled} defaultImageUrl={defaultImageUrl} />
+                <WelcomeScreen 
+                    persistent={true} 
+                    showClock={isClockEnabled} 
+                    defaultImageUrl={defaultImageUrl} 
+                    title={welcomeText.title} 
+                    subtitle={welcomeText.subtitle} 
+                />
             )}
 
             <div className="controls-overlay" style={{ zIndex: 1000 }}>

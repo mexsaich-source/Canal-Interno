@@ -117,6 +117,24 @@ const api = {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return response.data;
+    },
+
+    // 10. CONFIGURACIÓN GLOBAL
+    getWelcomeSettings: async () => {
+        try {
+            const response = await axios.get(`${API_URL}/settings/welcome`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+            return { title: 'HILTON', subtitle: 'México City Santa Fe' };
+        }
+    },
+    
+    updateWelcomeSettings: async (settingsData, token) => {
+        const response = await axios.post(`${API_URL}/settings/welcome`, settingsData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return response.data;
     }
 };
 
