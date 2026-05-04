@@ -9,6 +9,7 @@ const UploadModal = ({ category, onClose, onUpload }) => {
     const [scheduleStart, setScheduleStart] = useState('');
     const [scheduleEnd, setScheduleEnd] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [append, setAppend] = useState(false); // NUEVO: Estado para decidir si reemplazar o agregar
 
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
@@ -36,7 +37,7 @@ const UploadModal = ({ category, onClose, onUpload }) => {
         if (scheduleEnd) formData.append('scheduleEnd', new Date(scheduleEnd).toISOString());
 
         try {
-            await onUpload(category, formData);
+            await onUpload(category, formData, append); // NUEVO: Pasamos el flag append
         } finally {
             setIsUploading(false);
             onClose();
@@ -88,6 +89,18 @@ const UploadModal = ({ category, onClose, onUpload }) => {
                             </label>
                         </div>
                     )}
+
+                    <div className="form-group">
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <input 
+                                style={{ width: 'auto', marginRight: '10px' }}
+                                type="checkbox" 
+                                checked={append} 
+                                onChange={(e) => setAppend(e.target.checked)} 
+                            />
+                            Añadir a la programación actual (no borrar lo anterior)
+                        </label>
+                    </div>
 
                     <div className="form-group">
                         <label>🕒 Programar Inicio (Opcional)</label>

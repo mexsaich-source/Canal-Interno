@@ -33,14 +33,23 @@ const api = {
         return response.data;
     },
 
-    // 3. SUBIR VIDEO (Corregido para incluir la categoría y la ruta correcta)
-    uploadVideo: async (category, formData, token) => {
-        const response = await axios.post(`${API_URL}/upload/${category}`, formData, {
+    // 3. SUBIR VIDEO (Modificado para soportar append)
+    uploadVideo: async (category, formData, token, append = false) => {
+        const query = append ? '?append=true' : '';
+        const response = await axios.post(`${API_URL}/upload/${category}${query}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 // Enviamos el token para futura seguridad (opcional por ahora)
                 'Authorization': `Bearer ${token}`
             }
+        });
+        return response.data;
+    },
+
+    // 3.5 ELIMINAR ITEM DE LA PLAYLIST
+    deletePlaylistItem: async (category, publicId, token) => {
+        const response = await axios.delete(`${API_URL}/playlist/${category}/${publicId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         return response.data;
     },

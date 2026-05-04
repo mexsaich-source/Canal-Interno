@@ -43,6 +43,28 @@ const VideoPlayer = ({ category }) => {
     const [rotation, setRotation] = useState(initialData?.rotation || 0);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isClockEnabled, setIsClockEnabled] = useState(false);
+    const [defaultImageUrl, setDefaultImageUrl] = useState(null);
+
+    // --- OBTENER IMAGEN POR DEFECTO ---
+    useEffect(() => {
+        const fetchDefaultImage = async () => {
+            try {
+                const data = await api.getScreen('__DEFAULT_IMAGE__');
+                if (data && data.playlist && data.playlist.length > 0) {
+                    setDefaultImageUrl(data.playlist[0].url);
+                } else if (data && data.video_url) {
+                    setDefaultImageUrl(data.video_url);
+                } else {
+                    setDefaultImageUrl(null);
+                }
+            } catch (err) {
+                console.error('Error fetching default image:', err);
+            }
+        };
+        fetchDefaultImage();
+        const interval = setInterval(fetchDefaultImage, 30000); // Check every 30s
+        return () => clearInterval(interval);
+    }, []);
 
     // --- SOLUCIÓN BUG IMÁGENES: Referencia a la playlist actual ---
     const playlistRef = useRef(playlist);
@@ -237,7 +259,7 @@ const VideoPlayer = ({ category }) => {
                     )}
                 </div>
             ) : (
-                <WelcomeScreen persistent={true} showClock={isClockEnabled} />
+                <WelcomeScreen persistent={true} showClock={isClockEnabled} defaultImageUrl={defaultImageUrl} />
             )}
 
             <div className="controls-overlay" style={{ zIndex: 1000 }}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './WelcomeScreen.css';
 
-const WelcomeScreen = ({ onFinish, persistent = false, showClock = false }) => {
+const WelcomeScreen = ({ onFinish, persistent = false, showClock = false, defaultImageUrl = null }) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -19,11 +19,22 @@ const WelcomeScreen = ({ onFinish, persistent = false, showClock = false }) => {
     return () => clearTimeout(timer);
   }, [onFinish, persistent]);
 
+  const backgroundStyle = defaultImageUrl ? {
+      backgroundImage: `url(${defaultImageUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      animation: 'none'
+  } : {};
+
   return (
-    <div className={`welcome-overlay ${persistent ? 'placeholder' : ''}`}>
-      <h1 className="welcome-title">HILTON</h1>
-      <p className="welcome-subtitle">México City Santa Fe</p>
-      <div className="welcome-line"></div>
+    <div className={`welcome-overlay ${persistent ? 'placeholder' : ''}`} style={backgroundStyle}>
+      {!defaultImageUrl && (
+          <>
+              <h1 className="welcome-title">HILTON</h1>
+              <p className="welcome-subtitle">México City Santa Fe</p>
+              <div className="welcome-line"></div>
+          </>
+      )}
 
       {showClock && (
         <div style={{

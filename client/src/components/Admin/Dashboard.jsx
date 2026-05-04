@@ -51,14 +51,15 @@ const Dashboard = ({ user, onLogout }) => {
         }
     };
 
-    const handleUploadSubmit = async (category, formData) => {
+    const handleUploadSubmit = async (category, formData, append) => {
         setUploading(category);
         setMessage(null);
 
         try {
             const token = localStorage.getItem('token');
-            await api.uploadVideo(category, formData, token);
+            await api.uploadVideo(category, formData, token, append);
             setMessage({ type: 'success', text: `✅ Contenido de ${category} actualizado!` });
+            loadCategories(); // Recargar categorías para ver el nuevo contenido
         } catch (error) {
             console.error(error);
             setMessage({ type: 'error', text: `❌ Error al subir: ${error.response?.data?.error || error.message}` });
@@ -69,13 +70,27 @@ const Dashboard = ({ user, onLogout }) => {
     };
 
     const handleResetContent = async (category) => {
-        if (window.confirm(`¿Quitar el video/imagen actual de "${category}"? La pantalla quedará vacía.`)) {
+        if (window.confirm(`¿Quitar TODO el contenido actual de "${category}"? La pantalla quedará vacía.`)) {
             try {
                 const token = localStorage.getItem('token');
                 await api.resetScreenContent(category, token);
                 setMessage({ type: 'success', text: `✨ Contenido quitado de "${category}".` });
+                loadCategories();
             } catch (error) {
                 setMessage({ type: 'error', text: `❌ Error al quitar contenido: ${error.message}` });
+            }
+        }
+    };
+
+    const handleDeletePlaylistItem = async (category, publicId) => {
+        if (window.confirm('¿Eliminar este elemento específico de la programación?')) {
+            try {
+                const token = localStorage.getItem('token');
+                await api.deletePlaylistItem(category, publicId, token);
+                setMessage({ type: 'success', text: `🗑️ Elemento eliminado de la programación de ${category}.` });
+                loadCategories();
+            } catch (error) {
+                setMessage({ type: 'error', text: `❌ Error al eliminar elemento: ${error.response?.data?.error || error.message}` });
             }
         }
     };
@@ -163,7 +178,25 @@ const Dashboard = ({ user, onLogout }) => {
                                         <div className="card-icon"><FaTv /></div>
                                     )}
                                 </div>
-                                <h3>{cat}</h3>
+
+                                {screen.playlist && screen.playlist.length > 0 && (
+                                    <div className="playlist-items">
+                                        {screen.playlist.map((item, idx) => (
+                                            <div key={item.public_id || idx} className="playlist-item" title={item.type}>
+                                                {item.type === 'image' ? (
+                                                    <img src={item.url.replace('/upload/', '/upload/w_100,c_scale/')} alt="thumb" />
+                                                ) : (
+                                                    <video src={item.url} muted />
+                                                )}
+                                                {user?.role === 'admin' || canManageCategory(user, cat) ? (
+                                                    <button className="playlist-item-delete" onClick={() => handleDeletePlaylistItem(cat, item.public_id)}><FaTimes/></button>
+                                                ) : null}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <h3>{cat === '__DEFAULT_IMAGE__' ? 'Imagen por Defecto Global' : cat}</h3>
 
                                 <div className="card-actions">
                                     <button

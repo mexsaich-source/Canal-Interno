@@ -229,6 +229,7 @@ app.post('/api/rotation/:category', async (req, res) => {
 // PROTEGIDO: Upload
 app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), async (req, res) => {
     const { category } = req.params;
+    const append = req.query.append === 'true'; // NUEVO: Flag para no borrar
 
     if (!canManageCategory(req.user, category)) {
         return res.status(403).json({ error: 'No tienes permiso para subir contenido a esta pantalla' });
@@ -238,20 +239,24 @@ app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), 
     try {
         if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No se subió ningún archivo' });
 
-        // 1. Borrar si ya tenía algo para no saturar Cloudinary
+        // 1. Borrar si ya tenía algo para no saturar Cloudinary (SOLO SI NO ES APPEND)
+        let oldPlaylist = [];
         const prevRes = await pool.query('SELECT public_id, media_type, playlist FROM screens WHERE category = $1', [category]);
         if (prevRes.rows.length > 0) {
-            const oldPlaylist = prevRes.rows[0].playlist || [];
-            for (const item of oldPlaylist) {
-                if (item.public_id) await deleteFromCloudinary(item.public_id, item.type);
-            }
-            if (prevRes.rows[0].public_id && oldPlaylist.length === 0) {
-                await deleteFromCloudinary(prevRes.rows[0].public_id, prevRes.rows[0].media_type);
+            oldPlaylist = prevRes.rows[0].playlist || [];
+            if (!append) {
+                for (const item of oldPlaylist) {
+                    if (item.public_id) await deleteFromCloudinary(item.public_id, item.type);
+                }
+                if (prevRes.rows[0].public_id && oldPlaylist.length === 0) {
+                    await deleteFromCloudinary(prevRes.rows[0].public_id, prevRes.rows[0].media_type);
+                }
+                oldPlaylist = []; // Reseteamos la lista localmente
             }
         }
 
         // Construir nueva playlist
-        const newPlaylist = req.files.map(file => {
+        const newItems = req.files.map(file => {
             const isImg = file.mimetype.startsWith('image/');
             return {
                 url: file.path, 
@@ -264,19 +269,57 @@ app.post('/api/upload/:category', authenticateToken, upload.array('media', 50), 
             };
         });
 
+        const newPlaylist = append ? [...oldPlaylist, ...newItems] : newItems;
+
         // Retrocompatibilidad con sistemas viejos: Guardamos el primero en video_url
-        const first = newPlaylist[0];
+        const first = newPlaylist[0] || { url: '', public_id: '', type: 'video' };
 
         const query = `
             INSERT INTO screens (category, video_url, public_id, media_type, playlist) VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (category) DO UPDATE SET video_url = $2, public_id = $3, media_type = $4, playlist = $5 RETURNING *;
         `;
-        const result = await pool.query(query, [category, first.url, first.public_id, first.type, JSON.stringify(newPlaylist)]);
+        const result = await pool.query(query, [category, first.url || '', first.public_id || '', first.type || 'video', JSON.stringify(newPlaylist)]);
 
         res.json({ success: true, screen: result.rows[0] });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error subiendo archivo(s)' });
+    }
+});
+
+// NUEVO: Eliminar un item específico de la playlist
+app.delete('/api/playlist/:category/:public_id', authenticateToken, async (req, res) => {
+    const { category, public_id } = req.params;
+
+    if (!canManageCategory(req.user, category)) {
+        return res.status(403).json({ error: 'No tienes permiso para modificar esta pantalla' });
+    }
+
+    try {
+        const prevRes = await pool.query('SELECT playlist FROM screens WHERE category = $1', [category]);
+        if (prevRes.rows.length === 0) return res.status(404).json({ error: 'Categoría no encontrada' });
+
+        const currentPlaylist = prevRes.rows[0].playlist || [];
+        const itemToDelete = currentPlaylist.find(item => item.public_id === public_id);
+
+        if (!itemToDelete) return res.status(404).json({ error: 'Elemento no encontrado en la playlist' });
+
+        // Borrar de Cloudinary
+        await deleteFromCloudinary(itemToDelete.public_id, itemToDelete.type);
+
+        // Actualizar Playlist
+        const newPlaylist = currentPlaylist.filter(item => item.public_id !== public_id);
+        const first = newPlaylist[0] || { url: '', public_id: '', type: 'video' };
+
+        await pool.query(
+            'UPDATE screens SET video_url = $1, public_id = $2, media_type = $3, playlist = $4 WHERE category = $5',
+            [first.url || '', first.public_id || '', first.type || 'video', JSON.stringify(newPlaylist), category]
+        );
+
+        res.json({ success: true, newPlaylist });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error eliminando elemento' });
     }
 });
 
@@ -300,7 +343,7 @@ app.get('/api/categories', async (req, res) => {
         const result = await pool.query('SELECT category, video_url, media_type, playlist, created_by FROM screens ORDER BY category ASC');
         const dbScreens = result.rows;
 
-        const defaultNames = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes'];
+        const defaultNames = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes', '__DEFAULT_IMAGE__'];
         
         // Mezclamos con categorías por defecto si no están en DB
         let allScreens = [...dbScreens];
@@ -370,9 +413,9 @@ app.delete('/api/category/:category', authenticateToken, isAdmin, async (req, re
     }
 
     // Protegemos las categorías por defecto
-    const defaultCategories = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes'];
+    const defaultCategories = ['Inicio', 'HH', 'Room Service', 'Promociones', 'Clientes', '__DEFAULT_IMAGE__'];
     if (defaultCategories.includes(category)) {
-        return res.status(403).json({ error: 'No se pueden eliminar categorías básicas' });
+        return res.status(403).json({ error: 'No se pueden eliminar categorías básicas ni reservadas' });
     }
 
     try {
